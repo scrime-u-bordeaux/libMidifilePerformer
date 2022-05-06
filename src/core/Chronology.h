@@ -76,68 +76,6 @@ public:
     }
   }
 
-  /*
-  void pushEvent(int dt, T data) {
-    // deal with creating the very first inputSet :
-    if (fifo.empty())
-    {
-      if (inputSet.events.empty()) {
-        inputSet = {dt, {data}};
-      } else if (dt == 0) {
-        inputSet.events.push_back(data);
-      } else { // !inputSet.empty() && dt > 0
-        fifo.push_back(inputSet);
-        inputSet = {dt, {data}};
-      }
-      return;
-    }
-
-    // once fifo contains at least 1 set :
-    if (dt > 0)
-    {
-      if (!Events<T>::hasStart(fifo.back()))
-      {
-        if (!Events<T>::hasStart(inputSet)) {
-          auto& events = fifo.back().events;
-          events.insert(events.end(), inputSet.events.begin(), inputSet.events.end());
-          // no need to clear inputSet, it will be overwritten below
-        } else {
-          fifo.push_back(inputSet);
-        }
-      }
-      else
-      {
-        if (Events<T>::hasStart(inputSet)) {
-          eventSet<T> endEventSet{inputSet.dt, {}};
-
-          if (unmeet) { // the optional step !
-            for (auto& e : fifo.back().events) {
-              if (Events<T>::isStart(e)) {
-                auto it = inputSet.events.begin();
-                while (it != inputSet.events.end()) {
-                  if (Events<T>::correspond(e, *it) && !Events<T>::isStart(*it)) {
-                    endEventSet.events.push_back(*it);
-                    inputSet.events.erase(it);
-                    break;
-                  } else {
-                    it++;
-                  }
-                }
-              }
-            }
-          }
-          fifo.push_back(endEventSet);
-        }
-        fifo.push_back(inputSet);
-      }
-
-      inputSet = {dt, {data}};
-    } else {
-      inputSet.events.push_back(data);
-    }
-  }
-  */
-
   void finalize() {
     fifo.push_back(bufferSet);
     fifo.push_back(inputSet);
