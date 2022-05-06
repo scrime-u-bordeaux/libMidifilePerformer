@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <vector>
 
+// NB : commandKey and noteKey structs are for use as std::map keys
+
 struct commandData {
     bool pressed;
     uint8_t id;

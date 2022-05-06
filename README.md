@@ -1,11 +1,16 @@
-# Midifile Performer lib
+# libMidifilePerformer
 
-### C++ implementation of Bernard P. Serpette's Midifile Performer formalism
+### C++ version of Bernard P. Serpette's MidifilePerformer core functionalities
 
-Warning : this is a very rough work in progress.
-It is only targeting web environments through Emscripten at the moment.
+Warning : this is a very rough work in progress, only targeting web environments
+through Emscripten at the moment.
 
-Requirements :
+The library doesn't deal directly with MIDI files, it must be fed with NOTE
+events only, which should be obtained by parsing MIDI files and have their
+time stamps adjusted after other MIDI event types (e.g. MIDI CC events) have
+been discarded.
+
+#### Requirements
 
 * Building :
     * cmake
@@ -13,7 +18,7 @@ Requirements :
 * Testing :
     * nodejs
 
-Building :
+#### Building
 
 * `$ mkdir js`
 * `$ cd js`
@@ -21,6 +26,6 @@ Building :
 * `$ make`
 * `cd ..`
 
-Testing :
+#### Testing
 
 * `node test/mfp_test.js`
