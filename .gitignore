@@ -1,0 +1,11 @@
+.DS_Store
+Thumbs.db
+.vscode/
+
+assets/
+js/
+
+test/*
+!test/mfp_test.js
+
+src/midi/*
