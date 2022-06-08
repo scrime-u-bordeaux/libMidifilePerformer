@@ -22,7 +22,7 @@ been discarded.
 
 * `$ mkdir js`
 * `$ cd js`
-* `$ emcmake ..`
+* `$ emcmake cmake ..`
 * `$ make`
 * `cd ..`
 
