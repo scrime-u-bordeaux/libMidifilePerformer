@@ -11,13 +11,12 @@ const velocity = 127;
 const channel = 1;
 // Commands will stay fixed for this test.
 
-// Command list is : x x !x !x y z !y !z z y !y x !x !z
-// How is the x x sequence possible ?
+// Command list is : x y !y !x y z !y !z z y !y x !x !z
 
 const commands = [
   command(true, 62),
-  command(true, 62),
-  command(false, 62),
+  command(true, 61),
+  command(false, 61),
   command(false, 62),
   command(true, 61),
   command(true, 60),
@@ -58,8 +57,10 @@ function setIncoherentPartition(renderer){
 function setCoherentPartition(renderer){
     renderer.pushEvent(0, note(true,40));
 
-    renderer.pushEvent(1, note(false,40));
     renderer.pushEvent(1, note(true,50));
+    // pushing this "false" BEFORE a "true" HIDES IT !
+    // this seems like a glitch ! they are at the same dt and so this should make no difference.
+    renderer.pushEvent(1, note(false,40));
 
     renderer.pushEvent(2, note(false,50));
 
@@ -87,6 +88,7 @@ function play(commands,renderer){
     while (renderer.hasEvents() && i < commands.length) {
     // while (renderer.hasEvents()) {
 
+      console.log("debug : ",commands[i]);
       const events = renderer.combine3(commands[i++]);
       // const events = renderer.pullEvents();
 
@@ -112,7 +114,7 @@ function command(pressed, id) {
 
 MidifilePerformer.onRuntimeInitialized = () => {
 
-  console.log("Test with set commands : x x !x !x y z !y !z z y !y x !x !z");
+  console.log("Test with set commands : x y !y !x y z !y !z z y !y x !x !z");
   console.log("\n");
 
   // ---------------------------------------------------------------------------

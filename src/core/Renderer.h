@@ -1,6 +1,7 @@
 #ifndef MFP_RENDERER_H
 #define MFP_RENDERER_H
 
+#include <iostream>
 #include <list>
 #include "Chronology.h"
 
@@ -42,32 +43,38 @@ public:
         std::vector<Model> emptyEvents = {};
 
         if (Events::isStart<Command>(cmd)) {
-            // TODO : remove this (why is this even here ?)
-            /*
-            if (map3.find(key) == map3.end()) {
-                return emptyEvents; // or throw exception
-            }
-            */
-
             std::vector<Model> events = modelEvents.pullEvents();
 
             if (Events::hasStart<Model>(events)) {
-                std::vector<Model> nextEvents = modelEvents.pullEvents();
+                std::vector<Model> nextEvents = emptyEvents;
+
+                try{
+                    //while(nextEvents.empty() || Events::hasStart<Model>(nextEvents))
+                    nextEvents = modelEvents.pullEvents();
+                    if(Events::hasStart<Model>(nextEvents)) throw nextEvents;
+                }catch(std::vector<Model> nextEvents){
+                    std::cout << "ASSOCIATED START IN COMBINE MAP" << std::endl;
+                    exit(1);
+                }
+
                 map3[key] = nextEvents;
                 return events;
+
             } else {
                 return emptyEvents;
             }
         } else {
-            if (map3.find(key) != map3.end()) {
-                std::vector<Model> events = map3[key];
-                map3.erase(key);
-                return events;
-            } else {
-                // this shouldn't happen except if we allow command polyphony
-                // todo : throw exception instead
-                return emptyEvents;
+
+            try{
+                if(map3.find(key) == map3.end()) throw std::runtime_error("INVALID MAP ENTRY FOR KEY");
+            }catch(std::runtime_error e){
+                std::cout << e.what() << std::endl;
+                exit(1);
             }
+
+            std::vector<Model> events = map3[key];
+            map3.erase(key);
+            return events;
         }
     }
 };
