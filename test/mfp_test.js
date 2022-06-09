@@ -55,6 +55,32 @@ function setIncoherentPartition(renderer){
     renderer.finalize(); // integrate last pushed events into the model
 }
 
+function setCoherentPartition(renderer){
+    renderer.pushEvent(0, note(true,40));
+
+    renderer.pushEvent(1, note(false,40));
+    renderer.pushEvent(1, note(true,50));
+
+    renderer.pushEvent(2, note(false,50));
+
+    renderer.pushEvent(3, note(true,80));
+
+    renderer.pushEvent(4, note(true,20));
+    renderer.pushEvent(4, note(false,80));
+
+    renderer.pushEvent(5, note(false,20));
+
+    renderer.pushEvent(6, note(true,20));
+    renderer.pushEvent(6, note(true,40));
+    renderer.pushEvent(6, note(true,80));
+
+    renderer.pushEvent(8, note(false,20));
+    renderer.pushEvent(8, note(false,40));
+    renderer.pushEvent(8, note(false,80));
+
+    renderer.finalize();
+}
+
 function play(commands,renderer){
     let i = 0;
 
@@ -86,19 +112,39 @@ function command(pressed, id) {
 
 MidifilePerformer.onRuntimeInitialized = () => {
 
-  // ---------------------------------------------------------------------------
-
-  const renderer = new MidifilePerformer.Renderer();
-
-  // ---------------------------------------------------------------------------
-
-  // Test robustness against an incoherent partition
-  // (orphan endings and a note starting twice without ending)
-
-  setIncoherentPartition(renderer);
-
-  play(commands,renderer)
+  console.log("Test with set commands : x x !x !x y z !y !z z y !y x !x !z");
+  console.log("\n");
 
   // ---------------------------------------------------------------------------
+
+  console.log("Test performance of the given commands with partition :");
+  console.log("(40)(!40,50)(!50)(80)(20,!80)(!20)(20,40,80)()(!20,!40,!80)");
+  console.log("Expected output :")
+  console.log("(40)(50)(!40)(!50)(80)(20)(!80)(!20)(20)(40)(!40)(80)(!80)(!20)")
+
+  const renderer1 = new MidifilePerformer.Renderer();
+
+  setCoherentPartition(renderer1);
+
+  play(commands,renderer1);
+
+  console.log("\n");
+
+  // ---------------------------------------------------------------------------
+
+  console.log("Test robustness against an incoherent partition")
+  console.log("(orphan endings and a note starting twice without ending)");
+
+  const renderer2 = new MidifilePerformer.Renderer();
+
+  setIncoherentPartition(renderer2);
+
+  play(commands,renderer2)
+
+  console.log("\n");
+
+  // ---------------------------------------------------------------------------
+
+  console.log("Test over");
 
 }
