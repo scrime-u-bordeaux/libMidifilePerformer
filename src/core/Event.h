@@ -1,6 +1,7 @@
 #ifndef MFP_EVENT_H
 #define MFP_EVENT_H
 
+#include <iostream>
 #include <cstdint>
 #include <vector>
 
@@ -12,6 +13,13 @@ struct commandData {
     uint8_t velocity;
     uint8_t channel;
 };
+
+std::ostream& operator<<(std::ostream& os, struct commandData const &cmd){
+    return os << "[ pressed : " << cmd.pressed << " , " <<
+    "id : " << cmd.id << " , " <<
+    "velocity : " << cmd.velocity << " , " <<
+    "channel : " << cmd.channel << " ]";
+}
 
 struct commandKey {
     uint8_t id;
@@ -33,6 +41,13 @@ struct noteData {
     uint8_t velocity;
     uint8_t channel;
 };
+
+std::ostream& operator<<(std::ostream& os, struct noteData const &note){
+    return os << "[ pressed : " << note.on << " , " <<
+    "id : " << note.pitch << " , " <<
+    "velocity : " << note.velocity << " , " <<
+    "channel : " << note.channel << " ]";
+}
 
 struct noteKey {
     uint8_t pitch;

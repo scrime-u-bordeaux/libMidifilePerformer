@@ -55,29 +55,29 @@ function setIncoherentPartition(renderer){
 }
 
 function setCoherentPartition(renderer){
-    renderer.pushEvent(0, note(true,40));
+    renderer.pushEvent(1, note(true,40));
 
-    renderer.pushEvent(1, note(true,50));
+    renderer.pushEvent(2, note(true,50));
     // pushing this "false" BEFORE a "true" HIDES IT !
     // this seems like a glitch ! they are at the same dt and so this should make no difference.
-    renderer.pushEvent(1, note(false,40));
+    renderer.pushEvent(2, note(false,40));
 
-    renderer.pushEvent(2, note(false,50));
+    renderer.pushEvent(3, note(false,50));
 
-    renderer.pushEvent(3, note(true,80));
+    renderer.pushEvent(4, note(true,80));
 
-    renderer.pushEvent(4, note(true,20));
-    renderer.pushEvent(4, note(false,80));
+    renderer.pushEvent(5, note(true,20));
+    renderer.pushEvent(5, note(false,80));
 
-    renderer.pushEvent(5, note(false,20));
+    renderer.pushEvent(6, note(false,20));
 
-    renderer.pushEvent(6, note(true,20));
-    renderer.pushEvent(6, note(true,40));
-    renderer.pushEvent(6, note(true,80));
+    renderer.pushEvent(7, note(true,20));
+    renderer.pushEvent(7, note(true,40));
+    renderer.pushEvent(7, note(true,80));
 
-    renderer.pushEvent(8, note(false,20));
-    renderer.pushEvent(8, note(false,40));
-    renderer.pushEvent(8, note(false,80));
+    renderer.pushEvent(9, note(false,20));
+    renderer.pushEvent(9, note(false,40));
+    renderer.pushEvent(9, note(false,80));
 
     renderer.finalize();
 }

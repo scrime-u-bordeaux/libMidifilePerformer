@@ -57,6 +57,15 @@ public:
                     exit(1);
                 }
 
+                std::cout << "C++ debug : " << std::endl;
+                if(!nextEvents.empty()){
+                    for(Model& e : nextEvents){
+                        std::cout << e << std::endl;
+                    }
+                }else{
+                    std::cout << "Note associated with no release events" << std::endl;
+                }
+
                 map3[key] = nextEvents;
                 return events;
 

@@ -45,7 +45,7 @@ public:
           bufferSet = inputSet;
         }
       } else {
-        fifo.push_back(bufferSet);
+        /*if(!bufferSet.events.empty())*/ fifo.push_back(bufferSet);
 
         if (Events::hasStart<T>(inputSet)) {
           Events::Set<T> insertSet{inputSet.dt, {}};
@@ -65,7 +65,7 @@ public:
               }
             }
           }
-          fifo.push_back(insertSet);
+         /*if(!insertSet.events.empty())*/ fifo.push_back(insertSet);
         }
         bufferSet = inputSet;
       }
@@ -104,6 +104,11 @@ public:
 
     res = fifo.front();
     fifo.pop_front();
+    /*std::cout << "C++ debug : pulled events = [ ";
+    for(T& e : res.events){
+        std::cout << e << " , ";
+    }
+    std::cout << " ]" << std::endl;*/
     return res.events;
   }
 
