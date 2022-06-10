@@ -3,16 +3,19 @@
 
 #include <iostream>
 #include <list>
+#include <map>
 #include "Chronology.h"
 
 template <typename Model, typename Command, typename CommandKey>
 class Renderer {
     Chronology<Model> modelEvents;
     Chronology<Command> commandEvents;
+    bool lastEventPulled;
 
     std::map<CommandKey, std::vector<Model>> map3;
 public:
-    Renderer() {}
+
+    Renderer() : lastEventPulled(false) {}
 
     void pushEvent(int dt, Model event) {
         modelEvents.pushEvent(dt, event);
@@ -25,10 +28,11 @@ public:
 
     void finalize() {
         modelEvents.finalize();
+        //std::cout << "C++ debug : " << std::endl << modelEvents << std::endl;
     }
 
     bool hasEvents() {
-        return modelEvents.hasEvents();
+        return modelEvents.hasEvents() || lastEventPulled;
     }
 
     std::vector<Model> pullEvents() {
@@ -49,7 +53,6 @@ public:
                 std::vector<Model> nextEvents = emptyEvents;
 
                 try{
-                    //while(nextEvents.empty() || Events::hasStart<Model>(nextEvents))
                     nextEvents = modelEvents.pullEvents();
                     if(Events::hasStart<Model>(nextEvents)) throw nextEvents;
                 }catch(std::vector<Model> nextEvents){
@@ -57,14 +60,16 @@ public:
                     exit(1);
                 }
 
-                std::cout << "C++ debug : " << std::endl;
+                /*std::cout << "C++ debug : " << cmd << " associated with ";
                 if(!nextEvents.empty()){
                     for(Model& e : nextEvents){
                         std::cout << e << std::endl;
                     }
                 }else{
-                    std::cout << "Note associated with no release events" << std::endl;
-                }
+                    std::cout << "no release events" << std::endl;
+                }*/
+
+                if(!modelEvents.hasEvents()) lastEventPulled=true;
 
                 map3[key] = nextEvents;
                 return events;
@@ -74,8 +79,13 @@ public:
             }
         } else {
 
+
+            // This can only happen if two controllers pressed the same key on the same channel
+            // This should not happen
+
             try{
-                if(map3.find(key) == map3.end()) throw std::runtime_error("INVALID MAP ENTRY FOR KEY");
+                if(map3.find(key) == map3.end() && !lastEventPulled)
+                    throw std::runtime_error("INVALID MAP ENTRY FOR KEY");
             }catch(std::runtime_error e){
                 std::cout << e.what() << std::endl;
                 exit(1);

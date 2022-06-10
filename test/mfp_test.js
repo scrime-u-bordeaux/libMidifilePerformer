@@ -28,7 +28,7 @@ const commands = [
   command(false, 61),
   command(true, 62),
   command(false, 62),
-  command(false, 60),
+  command(false, 60)
 ];
 
 
@@ -51,35 +51,41 @@ function setIncoherentPartition(renderer){
     renderer.pushEvent(0, note(false, 63));
     renderer.pushEvent(1, note(false, 62));
     renderer.pushEvent(1, note(true, 60));
-    renderer.finalize(); // integrate last pushed events into the model
 }
 
-function setCoherentPartition(renderer){
+function setIncompleteCoherentPartition(renderer){
     renderer.pushEvent(1, note(true,40));
 
     renderer.pushEvent(2, note(true,50));
-    // pushing this "false" BEFORE a "true" HIDES IT !
-    // this seems like a glitch ! they are at the same dt and so this should make no difference.
-    renderer.pushEvent(2, note(false,40));
+    renderer.pushEvent(0, note(false,40));
 
     renderer.pushEvent(3, note(false,50));
 
     renderer.pushEvent(4, note(true,80));
 
     renderer.pushEvent(5, note(true,20));
-    renderer.pushEvent(5, note(false,80));
+    renderer.pushEvent(0, note(false,80));
 
     renderer.pushEvent(6, note(false,20));
 
     renderer.pushEvent(7, note(true,20));
-    renderer.pushEvent(7, note(true,40));
-    renderer.pushEvent(7, note(true,80));
+    renderer.pushEvent(0, note(true,40));
+    renderer.pushEvent(0, note(true,80));
 
     renderer.pushEvent(9, note(false,20));
-    renderer.pushEvent(9, note(false,40));
-    renderer.pushEvent(9, note(false,80));
+    renderer.pushEvent(0, note(false,40));
+    renderer.pushEvent(0, note(false,80));
+}
 
-    renderer.finalize();
+function setFullCoherentPartition(renderer){
+    setIncompleteCoherentPartition(renderer);
+
+    renderer.pushEvent(1, note(true,70));
+    renderer.pushEvent(1, note(true,75));
+
+    renderer.pushEvent(1, note(false,75));
+
+    renderer.pushEvent(1, note(false,70));
 }
 
 function play(commands,renderer){
@@ -88,9 +94,8 @@ function play(commands,renderer){
     while (renderer.hasEvents() && i < commands.length) {
     // while (renderer.hasEvents()) {
 
-      console.log("debug : ",commands[i]);
+      //console.log("debug : ",commands[i]);
       const events = renderer.combine3(commands[i++]);
-      // const events = renderer.pullEvents();
 
       console.log('--------------------------');
       for (let j = 0; j < events.size(); j++) {
@@ -119,14 +124,31 @@ MidifilePerformer.onRuntimeInitialized = () => {
 
   // ---------------------------------------------------------------------------
 
-  console.log("Test performance of the given commands with partition :");
+  console.log("Test performance of the given commands with FULL partition :");
+  console.log("(40)(!40,50)(!50)(80)(20,!80)(!20)(20,40,80)()(!20,!40,!80)(70)(75)(!75)(!70)");
+  console.log("Expected output :")
+  console.log("(40)(50)(!50)(!40)(80)(20)(!80)(!20)(20,40,80)(70)(!70)(75)(!75)(!20,!40,!80)")
+
+  const renderer0 = new MidifilePerformer.Renderer();
+
+  setFullCoherentPartition(renderer0);
+  renderer0.finalize();
+
+  play(commands,renderer0);
+
+  console.log("\n");
+
+  // ---------------------------------------------------------------------------
+
+  console.log("Test performance of the given commands with incomplete partition :");
   console.log("(40)(!40,50)(!50)(80)(20,!80)(!20)(20,40,80)()(!20,!40,!80)");
   console.log("Expected output :")
-  console.log("(40)(50)(!40)(!50)(80)(20)(!80)(!20)(20)(40)(!40)(80)(!80)(!20)")
+  console.log("(40)(50)(!50)(!40)(80)(20)(!80)(!20)(20,40,80)(!20,!40,!80)")
 
   const renderer1 = new MidifilePerformer.Renderer();
 
-  setCoherentPartition(renderer1);
+  setIncompleteCoherentPartition(renderer1);
+  renderer1.finalize();
 
   play(commands,renderer1);
 
@@ -140,6 +162,7 @@ MidifilePerformer.onRuntimeInitialized = () => {
   const renderer2 = new MidifilePerformer.Renderer();
 
   setIncoherentPartition(renderer2);
+  renderer2.finalize();
 
   play(commands,renderer2)
 

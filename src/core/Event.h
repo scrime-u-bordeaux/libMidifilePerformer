@@ -16,9 +16,9 @@ struct commandData {
 
 std::ostream& operator<<(std::ostream& os, struct commandData const &cmd){
     return os << "[ pressed : " << cmd.pressed << " , " <<
-    "id : " << cmd.id << " , " <<
-    "velocity : " << cmd.velocity << " , " <<
-    "channel : " << cmd.channel << " ]";
+    "id : " << int(cmd.id) << " , " <<
+    "velocity : " << int(cmd.velocity) << " , " <<
+    "channel : " << int(cmd.channel) << " ]";
 }
 
 struct commandKey {
@@ -43,10 +43,10 @@ struct noteData {
 };
 
 std::ostream& operator<<(std::ostream& os, struct noteData const &note){
-    return os << "[ pressed : " << note.on << " , " <<
-    "id : " << note.pitch << " , " <<
-    "velocity : " << note.velocity << " , " <<
-    "channel : " << note.channel << " ]";
+    return os << "[ on : " << note.on << " , " <<
+    "id : " << int(note.pitch) << " , " <<
+    "velocity : " << int(note.velocity) << " , " <<
+    "channel : " << int(note.channel) << " ]";
 }
 
 struct noteKey {
@@ -72,6 +72,16 @@ struct Set {
     int dt;
     std::vector<T> events;
 };
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, struct Set<T> const &s){
+    os << "Set at dt " << s.dt << " with elements [ " ;
+    for(T const & e : s.events){
+        os << e << " , ";
+    }
+    os << " ] " << std::endl;
+    return os;
+}
 
 template <typename T>
 bool isStart(T& e) { return true; }

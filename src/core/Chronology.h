@@ -17,6 +17,8 @@ private:
   std::list<Events::Set<T>> fifo;
 
 public:
+    template <class E>
+    friend std::ostream& operator<<(std::ostream& os, struct Chronology<E> const &c);
   Chronology() : unmeet(true), date(0) {}
   ~Chronology() {}
 
@@ -25,7 +27,7 @@ public:
     if (inputSet.events.empty()) {
       inputSet = {dt, {data}};
       return;
-    }
+  }
 
     if (dt > 0) {
       if (!Events::hasStart<T>(bufferSet)) {
@@ -96,10 +98,8 @@ public:
   std::vector<T> pullEvents() {
     Events::Set<T> res;
 
-    if (fifo.size() == 0) {
-      // throw an exception ?
-      // at least return an empty vector ...
-      return res.events;
+    if (!this->hasEvents()) {
+      return std::vector<T>();
     }
 
     res = fifo.front();
@@ -118,5 +118,16 @@ public:
     bufferSet.events.clear();
   }
 };
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, struct Chronology<T> const &c){
+    os << "Chronology Input Set : " << c.inputSet  << std::endl;
+    os << "Chronology Buffer Set : " << c.bufferSet << std::endl;
+    os << "Chronology Fifo : " << std::endl;
+    for(Events::Set<T> const & s : c.fifo){
+        os << s << std::endl;
+    }
+    return os;
+}
 
 #endif /* MFP_CHRONOLOGY_H */
