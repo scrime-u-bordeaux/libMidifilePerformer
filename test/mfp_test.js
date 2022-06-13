@@ -91,17 +91,27 @@ function setFullCoherentPartition(renderer){
 function play(commands,renderer){
     let i = 0;
 
+    console.log("Output : ")
+
     while (renderer.hasEvents() && i < commands.length) {
     // while (renderer.hasEvents()) {
 
       //console.log("debug : ",commands[i]);
       const events = renderer.combine3(commands[i++]);
 
-      console.log('--------------------------');
+      /*console.log('--------------------------');
       for (let j = 0; j < events.size(); j++) {
         const e = events.get(j);
         console.log(`note ${e.on ? 'on' : 'off'} : ${e.pitch}`);
-      }
+    }*/
+
+     process.stdout.write("(");
+     for(let j = 0 ; j < events.size() ; j++){
+         const e = events.get(j);
+         process.stdout.write((e.on ? '' : '!') + e.pitch);
+         if(j != events.size()-1) process.stdout.write(",");
+     }
+     process.stdout.write(")");
     }
 }
 
@@ -156,8 +166,12 @@ MidifilePerformer.onRuntimeInitialized = () => {
 
   // ---------------------------------------------------------------------------
 
-  console.log("Test robustness against an incoherent partition")
+  console.log("Test robustness against incoherent partition :")
+  console.log("(!55)(!56,!57)(60)(61)(!61,!60)(62,63)(64)(!64,63)(!62)(60)");
   console.log("(orphan endings and a note starting twice without ending)");
+  //console.log("Expected output : ")
+  // (60)(61)()(!61,!60)(62,63)(64)() what even ???
+  // x y !y !x y z !y !z z y !y x !x !z
 
   const renderer2 = new MidifilePerformer.Renderer();
 

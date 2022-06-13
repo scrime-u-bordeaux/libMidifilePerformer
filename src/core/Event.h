@@ -84,13 +84,13 @@ std::ostream& operator<<(std::ostream& os, struct Set<T> const &s){
 }
 
 template <typename T>
-bool isStart(T& e) { return true; }
+bool isStart(T const& e) { return true; }
 
 template <typename T>
-bool correspond(T& e1, T& e2) { return false; }
+bool correspond(T const& e1, T const& e2) { return false; }
 
 template <typename T>
-bool hasStart(std::vector<T>& events) {
+bool hasStart(std::vector<T> const& events) {
     for (auto& e : events)
         if (isStart<T>(e))
             return true;
@@ -98,38 +98,38 @@ bool hasStart(std::vector<T>& events) {
 }
 
 template <typename T>
-bool hasStart(Set<T>& set) { return hasStart<T>(set.events); }
+bool hasStart(Set<T> const& set) { return hasStart<T>(set.events); }
 
 template <typename T, typename K>
-K keyFromData(T& e) { K res; return res; }
+K keyFromData(T const& e) { K res; return res; }
 
 /* * * * * * * * * * * * * specializations for commands * * * * * * * * * * * */
 
 template<>
-bool isStart<commandData>(commandData& cmd) { return cmd.pressed; }
+bool isStart<commandData>(commandData const& cmd) { return cmd.pressed; }
 
 template<>
-bool correspond<commandData>(commandData& cmd1, commandData& cmd2) {
+bool correspond<commandData>(commandData const& cmd1, commandData const& cmd2) {
     return cmd1.id == cmd2.id && cmd1.channel == cmd2.channel;
 }
 
 template <>
-commandKey keyFromData<commandData, commandKey>(commandData& cmd) {
+commandKey keyFromData<commandData, commandKey>(commandData const& cmd) {
     return { cmd.id, cmd.channel };
 }
 
 //* * * * * * * * * * * * * specializations for notes * * * * * * * * * * * * */
 
 template<>
-bool isStart<noteData>(noteData& note) { return note.on; }
+bool isStart<noteData>(noteData const& note) { return note.on; }
 
 template<>
-bool correspond<noteData>(noteData& note1, noteData& note2) {
+bool correspond<noteData>(noteData const& note1, noteData const& note2) {
     return note1.pitch == note2.pitch && note1.channel == note2.channel;
 }
 
 template <>
-noteKey keyFromData<noteData, noteKey>(noteData& note) {
+noteKey keyFromData<noteData, noteKey>(noteData const& note) {
     return { note.pitch, note.channel };
 }
 
