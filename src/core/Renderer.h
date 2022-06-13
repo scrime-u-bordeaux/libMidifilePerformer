@@ -8,54 +8,99 @@
 
 template <typename Model, typename Command, typename CommandKey>
 class Renderer {
-    Chronology<Model> modelEvents;
-    Chronology<Command> commandEvents;
-    bool lastEventPulled;
 
-    std::map<CommandKey, std::vector<Model>> map3;
+    // -------------------------------------------------------------------------
+    // --------------------------PRIVATE FIELDS---------------------------------
+    // -------------------------------------------------------------------------
+
+    Chronology<Model> modelEvents; // A chronology of the model (partition)
+
+    Chronology<Command> commandEvents; // A chronology of the commands
+
+    bool lastEventPulled; // Indicates whether the last event of the model
+    // has already been pulled, so as to react differently when asked if any are left.
+
+    std::map<CommandKey, std::vector<Model>> map3; // A map between a start event
+    // and its correspondent ending.
+
+    // -------------------------------------------------------------------------
+
 public:
 
+    // -------------------------------------------------------------------------
+    // ----------------------CONSTRUCTORS/DESTRUCTORS---------------------------
+    // -------------------------------------------------------------------------
+
     Renderer() : lastEventPulled(false) {}
+
+    // -------------------------------------------------------------------------
+    // ---------------------------PUBLIC METHODS--------------------------------
+    // -------------------------------------------------------------------------
+
+    // Push a new model event.
+    // For now, command chronologies are not supported, so this is the only push
 
     void pushEvent(int dt, Model event) {
         modelEvents.pushEvent(dt, event);
     }
 
-    // this should be private if implemented at all
+    // This should be private if implemented at all,
+    // since commands will be pushed and pulled live
+
     // void pushCommandEvent(int dt, Command cmd) {
     //     commandEvents.pushEvent(dt, cmd);
     // }
+
+    // Finalize the fixed partition.
 
     void finalize() {
         modelEvents.finalize();
         //std::cout << "C++ debug : " << std::endl << modelEvents << std::endl;
     }
 
+    // If the last event isn't pulled, refer to the partition chronology.
+    // If it has, then it is still available, so there are still events.
+
     bool hasEvents() {
         return modelEvents.hasEvents() || lastEventPulled;
     }
+
+    // Pull events from the partition chronology.
+    // Is there any use for this ??
 
     std::vector<Model> pullEvents() {
         return modelEvents.pullEvents();
     }
 
-    // the combineN methods could be invoked from live commands or by pulling
+    // Combine a command with the appropriate model events.
+    // The combineN methods could be invoked from live commands or by pulling
     // the commandEvents chronology.
 
     std::vector<Model> combine3(Command cmd) {
         CommandKey key = Events::keyFromData<Command, CommandKey>(cmd);
         std::vector<Model> emptyEvents = {};
 
+        // If the command is a press, search for the next event.
+
         if (Events::isStart<Command>(cmd)) {
             std::vector<Model> events = modelEvents.pullEvents();
 
+            // If these next events are not all endings :
+            // (isn't this always the case ??)
+            // (isn't it counter-intuitive to press a key and only release notes ?)
+
             if (Events::hasStart<Model>(events)) {
                 std::vector<Model> nextEvents = emptyEvents;
+
+                // Get the associated end,
+                // which thanks to the chronology spec,
+                // is always found right next to the beginning.
 
                 try{
                     nextEvents = modelEvents.pullEvents();
                     if(Events::hasStart<Model>(nextEvents)) throw nextEvents;
                 }catch(std::vector<Model> nextEvents){
+                    // nextEvents should be an ending set.
                     std::cout << "ASSOCIATED START IN COMBINE MAP" << std::endl;
                     exit(1);
                 }
@@ -69,8 +114,10 @@ public:
                     std::cout << "no release events" << std::endl;
                 }*/
 
+                // Indicate that the last event has been pulled.
                 if(!modelEvents.hasEvents()) lastEventPulled=true;
 
+                // Map the key to this event, so as to bind its release to it.
                 map3[key] = nextEvents;
                 return events;
 
@@ -79,14 +126,12 @@ public:
             }
         } else {
 
-
-            // This can only happen if two controllers pressed the same key on the same channel
-            // This should not happen
-
             try{
                 if(map3.find(key) == map3.end() && !lastEventPulled)
                     throw std::runtime_error("INVALID MAP ENTRY FOR KEY");
             }catch(std::runtime_error e){
+                // This can only happen if two controllers pressed the same key on the same channel
+                // This should not happen
                 std::cout << e.what() << std::endl;
                 exit(1);
             }

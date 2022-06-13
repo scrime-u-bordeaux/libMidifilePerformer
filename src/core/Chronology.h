@@ -9,27 +9,56 @@ template <typename T>
 class Chronology {
 private:
 
+  // ---------------------------------------------------------------------------
+  // ------------------------------DATA TYPES-----------------------------------
+  // ---------------------------------------------------------------------------
+
+  // Describes a place where a set containing at least one beginning event
+  // was left without immediate ending
+
   struct incompleteEventSet{
-      Events::Set<T> set;
-      Events::Set<T>& followingEmptySet;
+      Events::Set<T> set; // a copy of the set of events left without endings
+      Events::Set<T>& followingEmptySet; // a reference to the empty set that follows
   };
 
-  bool unmeet;
-  uint64_t date;
-  // the set under construction :
-  Events::Set<T> inputSet;
-  // the set we need to decide what to do before we push to fifo :
-  Events::Set<T> bufferSet;
-  std::list<Events::Set<T>> fifo;
-  // the events for which a beginning was pushed but no immediate end
+  // ---------------------------------------------------------------------------
+  // ----------------------------PRIVATE FIELDS---------------------------------
+  // ---------------------------------------------------------------------------
+
+  bool unmeet; // Indicates whether or not to displace end events when possible
+  // ONLY RELEVANT FOR MODEL DATA. DISABLE FOR COMMANDS.
+
+  uint64_t date; // Unused for now, purpose unknown
+
+  Events::Set<T> inputSet; // Set containing the most recent input
+
+  Events::Set<T> bufferSet; // Set containing previous data
+  // not yet pushed to the fifo, to be altered depending on various conditions
+
+  std::list<Events::Set<T>> fifo; // The user-facing front of the chronology.
+  // It is where events are pushed to and pulled from.
+
+  std::list<struct incompleteEventSet> incompleteEvents; // The events for which
+  // a beginning was pushed, but no immediate end
   // kept track of in case the ending is found later
-  std::list<struct incompleteEventSet> incompleteEvents;
+
+  // ---------------------------------------------------------------------------
+  // ---------------------------PRIVATE METHODS---------------------------------
+  // ---------------------------------------------------------------------------
+
+  // Determines if compEvent is an ending event matching refEvent
 
   bool isMatchingEnd(T const& refEvent, T const& compEvent){
-      return Events::correspond<T>(refEvent, compEvent) && !Events::isStart<T>(compEvent);
+      return Events::correspond<T>(refEvent, compEvent)
+      && !Events::isStart<T>(compEvent);
   }
 
-  bool constructInsertSet(Events::Set<T>& inputSet, Events::Set<T> const& bufferSet, Events::Set<T>& insertSet){
+  // Shifts ending events contained in the inputSet into the insertSet
+  // if they match start events contained in the bufferSet
+
+  bool constructInsertSet(Events::Set<T>& inputSet,
+      Events::Set<T> const& bufferSet, Events::Set<T>& insertSet){
+
       for (auto& bufferEvent : bufferSet.events) {
         if (Events::isStart<T>(bufferEvent)) {
           auto it = inputSet.events.begin();
@@ -48,7 +77,10 @@ private:
       else return true;
   }
 
-  void checkForIncompleteEvents(){
+  // Checks whether incomplete events can be completed using the current inputSet.
+  // Inserts the corresponding endings directly into the empty set that follows them.
+
+  void checkForEventCompletion(){
       if(!incompleteEvents.empty()){
           auto it = incompleteEvents.begin();
           bool constructResult=false;
@@ -60,55 +92,99 @@ private:
       }
   }
 
+  // ---------------------------------------------------------------------------
+
 public:
-    template <class E>
-    friend std::ostream& operator<<(std::ostream& os, struct Chronology<E> const &c);
+
+  // ---------------------------------------------------------------------------
+  // -------------------------------OVERLOADING---------------------------------
+  // ---------------------------------------------------------------------------
+
+  template <class E>
+  friend std::ostream& operator<<(std::ostream& os, struct Chronology<E> const &c);
+
+  // ---------------------------------------------------------------------------
+  // ------------------------CONSTRUCTORS/DESTRUCTORS---------------------------
+  // ---------------------------------------------------------------------------
+
   Chronology() : unmeet(true), date(0) {}
   ~Chronology() {}
 
+  // ---------------------------------------------------------------------------
+  // -----------------------------PUBLIC METHODS--------------------------------
+  // ---------------------------------------------------------------------------
+
+  // Called when a new event is added to the chronology.
+
   void pushEvent(int dt, T& data) {
-    // this only happens on start or after calling finalize() or clear() :
+
+    // This only happens on start or after calling finalize() or clear() ;
+    // the inputSet is made to be the first input.
+
     if (inputSet.events.empty()) {
       inputSet = {dt, {data}};
       return;
     }
 
-    checkForIncompleteEvents();
+    // Before doing anything else, check whether the current inputSet
+    // can complete a previously incomplete event.
 
-    if (dt > 0) {
+    checkForEventCompletion();
+
+    if (dt > 0) { // Event begins at a different time ; inputSet and bufferSet will change
+
+      // In this case, the bufferSet is either empty or an ending set
       if (!Events::hasStart<T>(bufferSet)) {
+
+        // The inputSet is ALSO an ending set. So they can be merged.
         if (!Events::hasStart<T>(inputSet)) {
-          // merge inputSet into bufferSet :
+
+          // Merge inputSet into bufferSet :
+
           bufferSet.events.insert(
             bufferSet.events.end(),
             inputSet.events.begin(),
             inputSet.events.end()
           );
-        } else {
-          // this prevents us from pushing an ending set in the first position
+
+      } else { // the inputSet is a starting set (it has a least one start event)
+
+          // Guard against pushing an ending set in the first position of the fifo
+          // Pushing an empty set in other cases is fine, it is an artifical ending
+
           if (!fifo.empty()) {
             fifo.push_back(bufferSet);
           }
 
+          // Updatethe bufferSet : it is now a starting set
           bufferSet = inputSet;
         }
-      } else {
-        fifo.push_back(bufferSet);
 
-        if (Events::hasStart<T>(inputSet)) {
+    } else { // The bufferSet is a starting set
+
+        fifo.push_back(bufferSet); // First, push it.
+
+        if (Events::hasStart<T>(inputSet)) { // The inputSet is ALSO a starting set.
+            // so the two will have to be separated by an empty set,
+            // EXCEPT if unmeet is enabled.
             Events::Set<T> insertSet{inputSet.dt, {}};
 
+            // If unmeet is enabled, try to fill the empty set.
             if (unmeet) constructInsertSet(inputSet,bufferSet,insertSet);
 
+            // Push the set regardless to stay consistent with the format.
             fifo.push_back(insertSet);
+
+            // If it IS empty, register the bufferSet as incomplete.
             if(insertSet.events.empty())
                 incompleteEvents.push_back({bufferSet,fifo.back()});
         }
 
+        // Update the bufferSet.
         bufferSet = inputSet;
       }
 
-      // after we updated everything, we can reinit inputSet with latest input
+      // The inputSet is now the most recent input.
       inputSet = {dt, {data}};
 
   } else { // dt == 0 ; this is a synchronized event ; just append to the input.
@@ -118,23 +194,41 @@ public:
     //std::cout << *this << std::endl;
   }
 
+  // ---------------------------------------------------------------------------
+
+  // Called after all events have been pushed, and the chronology is ready.
+
   void finalize() {
-    checkForIncompleteEvents();
+
+    // One last time, check if we can complete any events.
+
+    checkForEventCompletion();
+
+    // Push the last input and buffer sets.
+
     fifo.push_back(bufferSet);
     fifo.push_back(inputSet);
 
-    // always end with an ending set
+    // Always end with an ending set. If the last input set isn't one, make one.
+
     if (Events::hasStart<T>(inputSet)) {
       fifo.push_back({1, {}});
     }
+
+    // Reset the inner sets.
 
     bufferSet.events.clear();
     inputSet.events.clear();
   }
 
+  // Self-explanatory.
+
   bool hasEvents() {
     return fifo.size() > 0;
   }
+
+  // Simply get the first set of events in the fifo.
+  // Returns an empty vector if the fifo is empty.
 
   std::vector<T> pullEvents() {
     Events::Set<T> res;
@@ -145,13 +239,17 @@ public:
 
     res = fifo.front();
     fifo.pop_front();
+
     /*std::cout << "C++ debug : pulled events = [ ";
     for(T& e : res.events){
         std::cout << e << " , ";
     }
     std::cout << " ]" << std::endl;*/
+
     return res.events;
   }
+
+  // Completely reset the chronology.
 
   void clear() {
     fifo.clear();
@@ -159,6 +257,10 @@ public:
     bufferSet.events.clear();
   }
 };
+
+// -----------------------------------------------------------------------------
+// ----------------------------FRIEND FUNCTIONS---------------------------------
+// -----------------------------------------------------------------------------
 
 template <typename T>
 std::ostream& operator<<(std::ostream& os, struct Chronology<T> const &c){
