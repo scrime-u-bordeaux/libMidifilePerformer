@@ -167,7 +167,7 @@ MidifilePerformer.onRuntimeInitialized = () => {
   // ---------------------------------------------------------------------------
 
   console.log("Test robustness against incoherent partition :")
-  console.log("(!55)(!56,!57)(60)(61)(!61,!60)(62,63)(64)(!64,63)(!62)(60)");
+  console.log("(!55)(!56,!57)(60)(61)(!61,!60)(62,63)(64)(!64,!63)(!62)(60)");
   console.log("(orphan endings and a note starting twice without ending)");
   //console.log("Expected output : ")
   // (60)(61)()(!61,!60)(62,63)(64)() what even ???
