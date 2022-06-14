@@ -106,14 +106,14 @@ function setMaxDisplacementPartition(renderer){
     renderer.pushEvent(1,note(false,40));
 }
 
-function setDesyncPartition(renderer){
+function setDesyncPartition(renderer,dt){
     renderer.pushEvent(1,note(true,20));
     renderer.pushEvent(0,note(true,40));
     renderer.pushEvent(0,note(true,80));
 
     renderer.pushEvent(1,note(false,20));
-    renderer.pushEvent(1,note(false,40));
-    renderer.pushEvent(1,note(false,80));
+    renderer.pushEvent(dt,note(false,40));
+    renderer.pushEvent(dt,note(false,80));
 }
 
 function play(commands,renderer){
@@ -223,6 +223,22 @@ function incoherentPartitionTest(){
     console.log("\n");
 }
 
+function syncTest(){
+    console.log("Test synchronization of chord release");
+    console.log("(20,40,80)(!20)(!40)(!80)");
+    console.log("Expected output : ");
+    console.log("(20,40,80)()()(!20,!40,80)()()()()()()()()()()");
+
+    const renderer = new MidifilePerformer.Renderer();
+
+    setDesyncPartition(renderer,0);
+    renderer.finalize();
+
+    play(commands,renderer);
+
+    console.log("\n");
+}
+
 function desyncTest(){
     console.log("Test desynchronization of chord release");
     console.log("(20,40,80)(!20)(!40)(!80)");
@@ -233,7 +249,7 @@ function desyncTest(){
 
     const renderer = new MidifilePerformer.Renderer();
 
-    setDesyncPartition(renderer);
+    setDesyncPartition(renderer,1);
     renderer.finalize();
 
     play(commands,renderer);
@@ -257,12 +273,14 @@ MidifilePerformer.onRuntimeInitialized = () => {
       incompletePartitionTest();
       incoherentPartitionTest();
       displacedEndingTest();
+      syncTest();
       desyncTest();
   }else{
       if(testArgs.includes("full")) fullPartitionTest();
       if(testArgs.includes("incomplete")) incompletePartitionTest();
       if(testArgs.includes("incoherent")) incoherentPartitionTest();
       if(testArgs.includes("displace")) displacedEndingTest();
+      if(testArgs.includes("sync")) syncTest();
       if(testArgs.includes("desync")) desyncTest();
   }
 
