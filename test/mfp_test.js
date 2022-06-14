@@ -89,6 +89,23 @@ function setFullCoherentPartition(renderer){
     renderer.pushEvent(1, note(false,70));
 }
 
+function setMaxDisplacementPartition(renderer){
+    renderer.pushEvent(1,note(true,40));
+    renderer.pushEvent(1,note(true,50));
+    renderer.pushEvent(1,note(true,60));
+    renderer.pushEvent(1,note(true,70));
+    renderer.pushEvent(1,note(true,80));
+    renderer.pushEvent(1,note(true,90));
+    renderer.pushEvent(1,note(true,100));
+    renderer.pushEvent(1,note(false,100));
+    renderer.pushEvent(1,note(false,90));
+    renderer.pushEvent(1,note(false,80));
+    renderer.pushEvent(1,note(false,70));
+    renderer.pushEvent(1,note(false,60));
+    renderer.pushEvent(1,note(false,50));
+    renderer.pushEvent(1,note(false,40));
+}
+
 function play(commands,renderer){
     let i = 0;
 
@@ -128,18 +145,36 @@ function command(pressed, id) {
 // ---------------------------------TESTS---------------------------------------
 // -----------------------------------------------------------------------------
 
+// x y !y !x y z !y !z z y !y x !x !z
+
+function displacedEndingTest(){
+    console.log("Extended test for incomplete events handling in partition : ");
+    console.log("(40)(50)(60)(70)(80)(90)(100)(!100)(!90)(!80)(!70)(!60)(50)(!40)");
+    console.log("Expected output : ");
+    console.log("(40)(50)(!50)(!40)(60)(70)(!60)(!70)(80)(90)(!90)(100)(!100)(!80)")
+
+    const renderer = new MidifilePerformer.Renderer();
+
+    setMaxDisplacementPartition(renderer);
+    renderer.finalize();
+
+    play(commands,renderer);
+
+    console.log("\n");
+}
+
 function fullPartitionTest(){
     console.log("Test performance of the given commands with FULL partition :");
     console.log("(40)(!40,50)(!50)(80)(20,!80)(!20)(20,40,80)()(!20,!40,!80)(70)(75)(!75)(!70)");
     console.log("Expected output :")
     console.log("(40)(50)(!50)(!40)(80)(20)(!80)(!20)(20,40,80)(70)(!70)(75)(!75)(!20,!40,!80)")
 
-    const renderer0 = new MidifilePerformer.Renderer();
+    const renderer = new MidifilePerformer.Renderer();
 
-    setFullCoherentPartition(renderer0);
-    renderer0.finalize();
+    setFullCoherentPartition(renderer);
+    renderer.finalize();
 
-    play(commands,renderer0);
+    play(commands,renderer);
 
     console.log("\n");
 }
@@ -150,12 +185,12 @@ function incompletePartitionTest(){
     console.log("Expected output :")
     console.log("(40)(50)(!50)(!40)(80)(20)(!80)(!20)(20,40,80)(!20,!40,!80)")
 
-    const renderer1 = new MidifilePerformer.Renderer();
+    const renderer = new MidifilePerformer.Renderer();
 
-    setIncompleteCoherentPartition(renderer1);
-    renderer1.finalize();
+    setIncompleteCoherentPartition(renderer);
+    renderer.finalize();
 
-    play(commands,renderer1);
+    play(commands,renderer);
 
     console.log("\n");
 }
@@ -168,12 +203,12 @@ function incoherentPartitionTest(){
     // (60)(61)()(!61,!60)(62,63)(64)() what even ???
     // x y !y !x y z !y !z z y !y x !x !z
 
-    const renderer2 = new MidifilePerformer.Renderer();
+    const renderer = new MidifilePerformer.Renderer();
 
-    setIncoherentPartition(renderer2);
-    renderer2.finalize();
+    setIncoherentPartition(renderer);
+    renderer.finalize();
 
-    play(commands,renderer2)
+    play(commands,renderer)
 
     console.log("\n");
 }
@@ -193,10 +228,12 @@ MidifilePerformer.onRuntimeInitialized = () => {
       fullPartitionTest();
       incompletePartitionTest();
       incoherentPartitionTest();
+      displacedEndingTest();
   }else{
       if(testArgs.includes("full")) fullPartitionTest();
       if(testArgs.includes("incomplete")) incompletePartitionTest();
       if(testArgs.includes("incoherent")) incoherentPartitionTest();
+      if(testArgs.includes("displace")) displacedEndingTest();
   }
 
   if(testArgs.length > 2) console.log("Test over");
