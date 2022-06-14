@@ -247,7 +247,7 @@ function desyncTest(){
 
 MidifilePerformer.onRuntimeInitialized = () => {
 
-  if(testArgs.length > 2){
+  if(testArgs.length > 0){
       console.log("Test with set commands : x y !y !x y z !y !z z y !y x !x !z");
       console.log("\n");
   }
@@ -266,6 +266,6 @@ MidifilePerformer.onRuntimeInitialized = () => {
       if(testArgs.includes("desync")) desyncTest();
   }
 
-  if(testArgs.length > 2) console.log("Test over");
+  if(testArgs.length > 0) console.log("Test over");
 
 }
