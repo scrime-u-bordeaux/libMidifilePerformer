@@ -1,5 +1,6 @@
 // const fs = require('fs');
 // const { serialize } = require('v8');
+const testArgs = process.argv.slice(2);
 const MidifilePerformer = require('../js/MidifilePerformer.js');
 
 // const data = fs.readFileSync(`${process.cwd()}/assets/mid/chopin-etude-op10-no4.mid`, null);
@@ -124,66 +125,80 @@ function command(pressed, id) {
 }
 
 // -----------------------------------------------------------------------------
+// ---------------------------------TESTS---------------------------------------
+// -----------------------------------------------------------------------------
+
+function fullPartitionTest(){
+    console.log("Test performance of the given commands with FULL partition :");
+    console.log("(40)(!40,50)(!50)(80)(20,!80)(!20)(20,40,80)()(!20,!40,!80)(70)(75)(!75)(!70)");
+    console.log("Expected output :")
+    console.log("(40)(50)(!50)(!40)(80)(20)(!80)(!20)(20,40,80)(70)(!70)(75)(!75)(!20,!40,!80)")
+
+    const renderer0 = new MidifilePerformer.Renderer();
+
+    setFullCoherentPartition(renderer0);
+    renderer0.finalize();
+
+    play(commands,renderer0);
+
+    console.log("\n");
+}
+
+function incompletePartitionTest(){
+    console.log("Test performance of the given commands with incomplete partition :");
+    console.log("(40)(!40,50)(!50)(80)(20,!80)(!20)(20,40,80)()(!20,!40,!80)");
+    console.log("Expected output :")
+    console.log("(40)(50)(!50)(!40)(80)(20)(!80)(!20)(20,40,80)(!20,!40,!80)")
+
+    const renderer1 = new MidifilePerformer.Renderer();
+
+    setIncompleteCoherentPartition(renderer1);
+    renderer1.finalize();
+
+    play(commands,renderer1);
+
+    console.log("\n");
+}
+
+function incoherentPartitionTest(){
+    console.log("Test robustness against incoherent partition :")
+    console.log("(!55)(!56,!57)(60)(61)(!61,!60)(62,63)(64)(!64,!63)(!62)(60)");
+    console.log("(orphan endings and a note starting twice without ending)");
+    //console.log("Expected output : ")
+    // (60)(61)()(!61,!60)(62,63)(64)() what even ???
+    // x y !y !x y z !y !z z y !y x !x !z
+
+    const renderer2 = new MidifilePerformer.Renderer();
+
+    setIncoherentPartition(renderer2);
+    renderer2.finalize();
+
+    play(commands,renderer2)
+
+    console.log("\n");
+}
+
+// -----------------------------------------------------------------------------
 // ------------------------------INITIALIZE-------------------------------------
 // -----------------------------------------------------------------------------
 
 MidifilePerformer.onRuntimeInitialized = () => {
 
-  console.log("Test with set commands : x y !y !x y z !y !z z y !y x !x !z");
-  console.log("\n");
+  if(testArgs.length > 2){
+      console.log("Test with set commands : x y !y !x y z !y !z z y !y x !x !z");
+      console.log("\n");
+  }
 
-  // ---------------------------------------------------------------------------
+  if(testArgs.includes("all")){
+      fullPartitionTest();
+      incompletePartitionTest();
+      incoherentPartitionTest();
+  }else{
+      if(testArgs.includes("full")) fullPartitionTest();
+      if(testArgs.includes("incomplete")) incompletePartitionTest();
+      if(testArgs.includes("incoherent")) incoherentPartitionTest();
+  }
 
-  console.log("Test performance of the given commands with FULL partition :");
-  console.log("(40)(!40,50)(!50)(80)(20,!80)(!20)(20,40,80)()(!20,!40,!80)(70)(75)(!75)(!70)");
-  console.log("Expected output :")
-  console.log("(40)(50)(!50)(!40)(80)(20)(!80)(!20)(20,40,80)(70)(!70)(75)(!75)(!20,!40,!80)")
-
-  const renderer0 = new MidifilePerformer.Renderer();
-
-  setFullCoherentPartition(renderer0);
-  renderer0.finalize();
-
-  play(commands,renderer0);
-
-  console.log("\n");
-
-  // ---------------------------------------------------------------------------
-
-  console.log("Test performance of the given commands with incomplete partition :");
-  console.log("(40)(!40,50)(!50)(80)(20,!80)(!20)(20,40,80)()(!20,!40,!80)");
-  console.log("Expected output :")
-  console.log("(40)(50)(!50)(!40)(80)(20)(!80)(!20)(20,40,80)(!20,!40,!80)")
-
-  const renderer1 = new MidifilePerformer.Renderer();
-
-  setIncompleteCoherentPartition(renderer1);
-  renderer1.finalize();
-
-  play(commands,renderer1);
-
-  console.log("\n");
-
-  // ---------------------------------------------------------------------------
-
-  console.log("Test robustness against incoherent partition :")
-  console.log("(!55)(!56,!57)(60)(61)(!61,!60)(62,63)(64)(!64,!63)(!62)(60)");
-  console.log("(orphan endings and a note starting twice without ending)");
-  //console.log("Expected output : ")
-  // (60)(61)()(!61,!60)(62,63)(64)() what even ???
-  // x y !y !x y z !y !z z y !y x !x !z
-
-  const renderer2 = new MidifilePerformer.Renderer();
-
-  setIncoherentPartition(renderer2);
-  renderer2.finalize();
-
-  play(commands,renderer2)
-
-  console.log("\n");
-
-  // ---------------------------------------------------------------------------
-
-  console.log("Test over");
+  if(testArgs.length > 2) console.log("Test over");
 
 }
