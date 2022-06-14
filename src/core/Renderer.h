@@ -20,6 +20,10 @@ class Renderer {
     bool lastEventPulled; // Indicates whether the last event of the model
     // has already been pulled, so as to react differently when asked if any are left.
 
+    std::list<std::vector<Model>> orphanedEndings; // A fifo of ending events
+    // that should have been associated to a key press, and have thus been thrown out.
+    // They are associated to releases which would otherwise have no effect.
+
     std::map<CommandKey, std::vector<Model>> map3; // A map between a start event
     // and its correspondent ending.
 
@@ -122,6 +126,8 @@ public:
                 return events;
 
             } else {
+                orphanedEndings.push_back(events);
+                if(!modelEvents.hasEvents()) lastEventPulled=true;
                 return emptyEvents;
             }
         } else {
@@ -137,6 +143,10 @@ public:
             }
 
             std::vector<Model> events = map3[key];
+            if(events.empty()){
+                events = orphanedEndings.front();
+                orphanedEndings.pop_front();
+            }
             map3.erase(key);
             return events;
         }

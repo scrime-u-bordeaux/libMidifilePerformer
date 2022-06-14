@@ -46,6 +46,14 @@ private:
   // ---------------------------PRIVATE METHODS---------------------------------
   // ---------------------------------------------------------------------------
 
+  void mergeSets(Events::Set<T>& greaterSet, Events::Set<T> const& mergedSet){
+      greaterSet.events.insert(
+        greaterSet.events.end(),
+        mergedSet.events.begin(),
+        mergedSet.events.end()
+      );
+  }
+
   // Determines if compEvent is an ending event matching refEvent
 
   bool isMatchingEnd(T const& refEvent, T const& compEvent){
@@ -139,13 +147,7 @@ public:
         // The inputSet is ALSO an ending set. So they can be merged.
         if (!Events::hasStart<T>(inputSet)) {
 
-          // Merge inputSet into bufferSet :
-
-          bufferSet.events.insert(
-            bufferSet.events.end(),
-            inputSet.events.begin(),
-            inputSet.events.end()
-          );
+          mergeSets(bufferSet,inputSet);
 
       } else { // the inputSet is a starting set (it has a least one start event)
 

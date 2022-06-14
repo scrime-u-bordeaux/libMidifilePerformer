@@ -106,6 +106,16 @@ function setMaxDisplacementPartition(renderer){
     renderer.pushEvent(1,note(false,40));
 }
 
+function setDesyncPartition(renderer){
+    renderer.pushEvent(1,note(true,20));
+    renderer.pushEvent(0,note(true,40));
+    renderer.pushEvent(0,note(true,80));
+
+    renderer.pushEvent(1,note(false,20));
+    renderer.pushEvent(1,note(false,40));
+    renderer.pushEvent(1,note(false,80));
+}
+
 function play(commands,renderer){
     let i = 0;
 
@@ -165,7 +175,7 @@ function displacedEndingTest(){
 
 function fullPartitionTest(){
     console.log("Test performance of the given commands with FULL partition :");
-    console.log("(40)(!40,50)(!50)(80)(20,!80)(!20)(20,40,80)()(!20,!40,!80)(70)(75)(!75)(!70)");
+    console.log("(40)(!40,50)(!50)(80)(20,!80)(!20)(20,40,80)(!20,!40,!80)(70)(75)(!75)(!70)");
     console.log("Expected output :")
     console.log("(40)(50)(!50)(!40)(80)(20)(!80)(!20)(20,40,80)(70)(!70)(75)(!75)(!20,!40,!80)")
 
@@ -181,9 +191,9 @@ function fullPartitionTest(){
 
 function incompletePartitionTest(){
     console.log("Test performance of the given commands with incomplete partition :");
-    console.log("(40)(!40,50)(!50)(80)(20,!80)(!20)(20,40,80)()(!20,!40,!80)");
+    console.log("(40)(!40,50)(!50)(80)(20,!80)(!20)(20,40,80)(!20,!40,!80)");
     console.log("Expected output :")
-    console.log("(40)(50)(!50)(!40)(80)(20)(!80)(!20)(20,40,80)(!20,!40,!80)")
+    console.log("(40)(50)(!50)(!40)(80)(20)(!80)(!20)(20,40,80)()()()()(!20,!40,!80) (useless presses and releases)")
 
     const renderer = new MidifilePerformer.Renderer();
 
@@ -213,6 +223,24 @@ function incoherentPartitionTest(){
     console.log("\n");
 }
 
+function desyncTest(){
+    console.log("Test desynchronization of chord release");
+    console.log("(20,40,80)(!20)(!40)(!80)");
+    console.log("Expected output : ");
+    console.log("(20,40,80)()(!80)(!20,!40)()()()()()()()()()()");
+    console.log("(because of merge ; without merge, would be :)");
+    console.log("(20,40,80)()(!40)(!20)()()(!80)()()()()()()()");
+
+    const renderer = new MidifilePerformer.Renderer();
+
+    setDesyncPartition(renderer);
+    renderer.finalize();
+
+    play(commands,renderer);
+
+    console.log("\n");
+}
+
 // -----------------------------------------------------------------------------
 // ------------------------------INITIALIZE-------------------------------------
 // -----------------------------------------------------------------------------
@@ -229,11 +257,13 @@ MidifilePerformer.onRuntimeInitialized = () => {
       incompletePartitionTest();
       incoherentPartitionTest();
       displacedEndingTest();
+      desyncTest();
   }else{
       if(testArgs.includes("full")) fullPartitionTest();
       if(testArgs.includes("incomplete")) incompletePartitionTest();
       if(testArgs.includes("incoherent")) incoherentPartitionTest();
       if(testArgs.includes("displace")) displacedEndingTest();
+      if(testArgs.includes("desync")) desyncTest();
   }
 
   if(testArgs.length > 2) console.log("Test over");
