@@ -100,6 +100,37 @@ private:
       }
   }
 
+  void lastPush(){
+
+      checkForEventCompletion();
+
+      if (!Events::hasStart<T>(bufferSet)) {
+          if (!Events::hasStart<T>(inputSet)) {
+              mergeSets(bufferSet,inputSet);
+              fifo.push_back(bufferSet);
+              return;
+          }else{
+              if (!fifo.empty()) {
+                fifo.push_back(bufferSet);
+              }
+              fifo.push_back(inputSet);
+              return;
+          }
+      } else {
+          fifo.push_back(bufferSet);
+
+          if (Events::hasStart<T>(inputSet)) {
+              Events::Set<T> insertSet{inputSet.dt, {}};
+              if (unmeet) constructInsertSet(inputSet,bufferSet,insertSet);
+              fifo.push_back(insertSet);
+              if(insertSet.events.empty())
+                  incompleteEvents.push_back({bufferSet,fifo.back()});
+          }
+          fifo.push_back(inputSet);
+        }
+  }
+
+
   // ---------------------------------------------------------------------------
 
 public:
@@ -202,14 +233,16 @@ public:
 
   void finalize() {
 
-    // One last time, check if we can complete any events.
+    lastPush();
+
+    /*// One last time, check if we can complete any events.
 
     checkForEventCompletion();
 
     // Push the last input and buffer sets.
 
     fifo.push_back(bufferSet);
-    fifo.push_back(inputSet);
+    fifo.push_back(inputSet);*/
 
     // Always end with an ending set. If the last input set isn't one, make one.
 

@@ -23,6 +23,9 @@ class Renderer {
     std::list<std::vector<Model>> orphanedEndings; // A fifo of ending events
     // that should have been associated to a key press, and have thus been thrown out.
     // They are associated to releases which would otherwise have no effect.
+    // Note : this list should never be used under normal circumstances
+    // (because if ending events have been associated to a key press,
+    // that means the preprocessing of the model chronology went wrong.)
 
     std::map<CommandKey, std::vector<Model>> map3; // A map between a start event
     // and its correspondent ending.
@@ -87,6 +90,7 @@ public:
         // If the command is a press, search for the next event.
 
         if (Events::isStart<Command>(cmd)) {
+            //std::cout << "start command" << std::endl;
             std::vector<Model> events = modelEvents.pullEvents();
 
             // If these next events are not all endings :
@@ -132,6 +136,8 @@ public:
             }
         } else {
 
+            //std::cout << "end command" << std::endl;
+
             try{
                 if(map3.find(key) == map3.end() && !lastEventPulled)
                     throw std::runtime_error("INVALID MAP ENTRY FOR KEY");
@@ -143,7 +149,7 @@ public:
             }
 
             std::vector<Model> events = map3[key];
-            if(events.empty()){
+            if(events.empty() && !orphanedEndings.empty()){
                 events = orphanedEndings.front();
                 orphanedEndings.pop_front();
             }

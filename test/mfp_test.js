@@ -227,7 +227,7 @@ function desyncTest(){
     console.log("Test desynchronization of chord release");
     console.log("(20,40,80)(!20)(!40)(!80)");
     console.log("Expected output : ");
-    console.log("(20,40,80)()(!80)(!20,!40)()()()()()()()()()()");
+    console.log("(20,40,80)()()(!20,!40,80)()()()()()()()()()()");
     console.log("(because of merge ; without merge, would be :)");
     console.log("(20,40,80)()(!40)(!20)()()(!80)()()()()()()()");
 
