@@ -100,34 +100,72 @@ private:
       }
   }
 
-  void lastPush(){
+  // The set of steps followed when modifying or pushing the bufferSet and inputSet.
+  // Used by pushEvent to update the chronology, but also lastPush to finalize it.
 
-      checkForEventCompletion();
+  void genericPushLogic(bool last){
 
+      // In this case, the bufferSet is either empty or an ending set
       if (!Events::hasStart<T>(bufferSet)) {
-          if (!Events::hasStart<T>(inputSet)) {
-              mergeSets(bufferSet,inputSet);
-              fifo.push_back(bufferSet);
-              return;
-          }else{
-              if (!fifo.empty()) {
-                fifo.push_back(bufferSet);
-              }
-              fifo.push_back(inputSet);
-              return;
-          }
-      } else {
-          fifo.push_back(bufferSet);
 
-          if (Events::hasStart<T>(inputSet)) {
-              Events::Set<T> insertSet{inputSet.dt, {}};
-              if (unmeet) constructInsertSet(inputSet,bufferSet,insertSet);
-              fifo.push_back(insertSet);
-              if(insertSet.events.empty())
-                  incompleteEvents.push_back({bufferSet,fifo.back()});
-          }
-          fifo.push_back(inputSet);
+        // The inputSet is ALSO an ending set. So they can be merged.
+        if (!Events::hasStart<T>(inputSet)) {
+
+            mergeSets(bufferSet,inputSet);
+            if(last) fifo.push_back(bufferSet);
+            return;
+
+        }else { // the inputSet is a starting set (it has a least one start event)
+
+            // Guard against pushing an ending set in the first position of the fifo
+            // Pushing an empty set in other cases is fine, it is an artifical ending
+
+            if (!fifo.empty()) {
+              fifo.push_back(bufferSet);
+            }
+
+            if(last) fifo.push_back(inputSet);
+            else bufferSet = inputSet;
+
+            return;
         }
+
+    } else {
+
+        // The bufferSet is a starting set
+
+            fifo.push_back(bufferSet); // First, push it.
+
+            if (Events::hasStart<T>(inputSet)) { // The inputSet is ALSO a starting set.
+                // so the two will have to be separated by an empty set,
+                // EXCEPT if unmeet is enabled.
+                Events::Set<T> insertSet{inputSet.dt, {}};
+
+                // If unmeet is enabled, try to fill the empty set.
+                if (unmeet) constructInsertSet(inputSet,bufferSet,insertSet);
+
+                // Push the set regardless to stay consistent with the format.
+                fifo.push_back(insertSet);
+
+                // If it IS empty, register the bufferSet as incomplete.
+                if(insertSet.events.empty())
+                    incompleteEvents.push_back({bufferSet,fifo.back()});
+                }
+
+                if(last) fifo.push_back(inputSet);
+                else bufferSet = inputSet;
+
+                return;
+
+        }
+  }
+
+  // Called by finalize() to cleanly push the last sets,
+  // AFTER checking for incomplete events one last time.
+
+  void lastPush(){
+      checkForEventCompletion();
+      genericPushLogic(true);
   }
 
 
@@ -172,50 +210,7 @@ public:
 
     if (dt > 0) { // Event begins at a different time ; inputSet and bufferSet will change
 
-      // In this case, the bufferSet is either empty or an ending set
-      if (!Events::hasStart<T>(bufferSet)) {
-
-        // The inputSet is ALSO an ending set. So they can be merged.
-        if (!Events::hasStart<T>(inputSet)) {
-
-          mergeSets(bufferSet,inputSet);
-
-      } else { // the inputSet is a starting set (it has a least one start event)
-
-          // Guard against pushing an ending set in the first position of the fifo
-          // Pushing an empty set in other cases is fine, it is an artifical ending
-
-          if (!fifo.empty()) {
-            fifo.push_back(bufferSet);
-          }
-
-          // Updatethe bufferSet : it is now a starting set
-          bufferSet = inputSet;
-        }
-
-    } else { // The bufferSet is a starting set
-
-        fifo.push_back(bufferSet); // First, push it.
-
-        if (Events::hasStart<T>(inputSet)) { // The inputSet is ALSO a starting set.
-            // so the two will have to be separated by an empty set,
-            // EXCEPT if unmeet is enabled.
-            Events::Set<T> insertSet{inputSet.dt, {}};
-
-            // If unmeet is enabled, try to fill the empty set.
-            if (unmeet) constructInsertSet(inputSet,bufferSet,insertSet);
-
-            // Push the set regardless to stay consistent with the format.
-            fifo.push_back(insertSet);
-
-            // If it IS empty, register the bufferSet as incomplete.
-            if(insertSet.events.empty())
-                incompleteEvents.push_back({bufferSet,fifo.back()});
-        }
-
-        // Update the bufferSet.
-        bufferSet = inputSet;
-      }
+      genericPushLogic(false);
 
       // The inputSet is now the most recent input.
       inputSet = {dt, {data}};
@@ -233,18 +228,9 @@ public:
 
   void finalize() {
 
+    // Pushes the bufferSet and inputSet to fifo with the same rules as a normal push
+
     lastPush();
-
-    /*// One last time, check if we can complete any events.
-
-    checkForEventCompletion();
-
-    // Push the last input and buffer sets.
-
-    fifo.push_back(bufferSet);
-    fifo.push_back(inputSet);*/
-
-    // Always end with an ending set. If the last input set isn't one, make one.
 
     if (Events::hasStart<T>(inputSet)) {
       fifo.push_back({1, {}});
