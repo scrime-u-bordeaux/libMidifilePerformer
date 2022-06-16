@@ -187,7 +187,7 @@ public:
   // ------------------------CONSTRUCTORS/DESTRUCTORS---------------------------
   // ---------------------------------------------------------------------------
 
-  Chronology() : unmeet(true), date(0) {}
+  Chronology() : unmeet(true), date(0), complete(false) {}
   Chronology(bool _complete) : unmeet(true), date(0), complete(_complete) {}
   ~Chronology() {}
 
