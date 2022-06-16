@@ -28,6 +28,9 @@ private:
   bool unmeet; // Indicates whether or not to displace end events when possible
   // ONLY RELEVANT FOR MODEL DATA. DISABLE FOR COMMANDS.
 
+  bool complete; // Indicates whether or not to complete empty sets when possible
+  // ONLY RELEVANT FOR MODEL DATA. DISABLE FOR COMMANDS.
+
   uint64_t date; // Unused for now, purpose unknown
 
   Events::Set<T> inputSet; // Set containing the most recent input
@@ -164,7 +167,7 @@ private:
   // AFTER checking for incomplete events one last time.
 
   void lastPush(){
-      checkForEventCompletion();
+      if(complete) checkForEventCompletion();
       genericPushLogic(true);
   }
 
@@ -185,6 +188,7 @@ public:
   // ---------------------------------------------------------------------------
 
   Chronology() : unmeet(true), date(0) {}
+  Chronology(bool _complete) : unmeet(true), date(0), complete(_complete) {}
   ~Chronology() {}
 
   // ---------------------------------------------------------------------------
@@ -206,7 +210,7 @@ public:
     // Before doing anything else, check whether the current inputSet
     // can complete a previously incomplete event.
 
-    checkForEventCompletion();
+    if(complete) checkForEventCompletion();
 
     if (dt > 0) { // Event begins at a different time ; inputSet and bufferSet will change
 

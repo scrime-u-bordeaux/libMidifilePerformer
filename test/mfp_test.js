@@ -37,6 +37,13 @@ const commands = [
 // ----------------------------UTIL FUNCTIONS-----------------------------------
 // -----------------------------------------------------------------------------
 
+function setMinimalTestPartition(renderer){
+    renderer.pushEvent(1, note(true, 60));
+    renderer.pushEvent(1, note(true, 62));
+    renderer.pushEvent(1, note(false, 60));
+    renderer.pushEvent(1, note(false, 62));
+}
+
 function setIncoherentPartition(renderer){
     renderer.pushEvent(0, note(false, 55));
     renderer.pushEvent(1, note(false, 56));
@@ -155,6 +162,29 @@ function command(pressed, id) {
 // ---------------------------------TESTS---------------------------------------
 // -----------------------------------------------------------------------------
 
+function minimalTest(){
+    const minCommands = [
+        command(true, 60),
+        command(false, 60),
+        command(true, 62),
+        command(false, 62)
+    ];
+
+    console.log("Testing for minimal compliance to combine3 logic with partition :");
+    console.log("(60)(62)(!60)(!62)");
+    console.log("Expected output :");
+    console.log("(60)()(62)(!60,!62)");
+
+    const renderer = new MidifilePerformer.Renderer();
+
+    setMinimalTestPartition(renderer);
+    renderer.finalize();
+
+    play(minCommands,renderer);
+
+    console.log("\n");
+}
+
 // x y !y !x y z !y !z z y !y x !x !z
 
 function displacedEndingTest(){
@@ -263,8 +293,16 @@ function desyncTest(){
 
 MidifilePerformer.onRuntimeInitialized = () => {
 
-  if(testArgs.length > 0){
-      console.log("Test with set commands : x y !y !x y z !y !z z y !y x !x !z");
+  if(testArgs.includes("all") || testArgs.includes("min")){
+      console.log("Test set with commands : x !x y !y");
+      console.log("\n");
+
+      minimalTest();
+  }
+
+
+  if(testArgs.length > 0 && !(testArgs.length == 1 && testArgs[0]=="min")){
+      console.log("Test set with commands : x y !y !x y z !y !z z y !y x !x !z");
       console.log("\n");
   }
 
