@@ -4,13 +4,24 @@ project(MidifilePerformer LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(${PROJECT_NAME}
-  ${PROJECT_SOURCE_DIR}/src/Embindings.cpp
-)
+if(EMSCRIPTEN)
+  add_executable(${PROJECT_NAME}
+    ${PROJECT_SOURCE_DIR}/src/Embindings.cpp
+  )
+  
+  # see all options here :
+  # https://github.com/emscripten-core/emscripten/blob/main/src/settings.js
 
-set_target_properties(${PROJECT_NAME}
-  PROPERTIES LINK_FLAGS "--bind"
-)
+  set(LINK_FLAGS "-lembind")
 
-include(CTest)
-add_test(NAME jstest COMMAND node ${PROJECT_SOURCE_DIR}/test/mfp_tests.js)
+  if(BROWSER_VERSION)
+    # set(CMAKE_EXECUTABLE_SUFFIX ".html")
+    # set(LINK_FLAGS "${LINK_FLAGS} -sENVIRONMENT=web")
+    # set(LINK_FLAGS "${LINK_FLAGS} -sENVIRONMENT=web -sMODULARIZE=1")
+    set(LINK_FLAGS "${LINK_FLAGS} -sENVIRONMENT=web -sMODULARIZE=1 -sEXPORT_ES6=1")
+  endif()
+
+  set_target_properties(${PROJECT_NAME}
+    PROPERTIES LINK_FLAGS ${LINK_FLAGS}
+  )
+endif()
