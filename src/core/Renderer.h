@@ -38,7 +38,8 @@ public:
     // ----------------------CONSTRUCTORS/DESTRUCTORS---------------------------
     // -------------------------------------------------------------------------
 
-    Renderer() : lastEventPulled(false), modelEvents(Chronology<Model>(true)) {}
+    Renderer() : lastEventPulled(false), modelEvents(Chronology<Model>(false)) {}
+    Renderer(bool completeEvents) : lastEventPulled(false), modelEvents(Chronology<Model>(completeEvents)) {}
 
     // -------------------------------------------------------------------------
     // ---------------------------PUBLIC METHODS--------------------------------

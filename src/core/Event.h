@@ -71,6 +71,13 @@ template <typename T>
 struct Set {
     int dt;
     std::vector<T> events;
+
+    // Used for sorting IN THE CASE OF ABSOLUTE TICKS
+    // (Of use in the ossia score binding)
+
+    bool operator<(const Set<T>& set) const {
+        return dt < set.dt;
+    }
 };
 
 template <typename T>
