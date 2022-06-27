@@ -69,7 +69,7 @@ namespace Events {
 
 template <typename T>
 struct Set {
-    int dt;
+    int64_t dt;
     std::vector<T> events;
 
     // Used for sorting IN THE CASE OF ABSOLUTE TICKS
