@@ -1,7 +1,7 @@
 // const fs = require('fs');
 // const { serialize } = require('v8');
 // import MidifilePerformer from '../dist/MidifilePerformer.js';
-const MidifilePerformer = require('../dist/node/MidifilePerformer.js');
+const MidifilePerformer = require('../../dist/node/MidifilePerformer.js');
 
 // const data = fs.readFileSync(`${process.cwd()}/assets/mid/chopin-etude-op10-no4.mid`, null);
 
