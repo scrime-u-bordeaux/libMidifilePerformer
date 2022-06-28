@@ -2,10 +2,8 @@
 Thumbs.db
 .vscode/
 
+package-lock.json
+node_modules/
 assets/
-js/
-
-test/*
-!test/mfp_test.js
 
 src/midi/*
