@@ -68,9 +68,11 @@ public:
 
     // If the last event isn't pulled, refer to the partition chronology.
     // If it has, then it is still available, so there are still events.
+    // However, if the user has explicitly stated to exclude it, then it is possible.
+    // (This is necessary when checking to see if the chronology is simply empty.)
 
-    bool hasEvents() {
-        return modelEvents.hasEvents() || lastEventPulled;
+    bool hasEvents(bool countLastEvent=true) {
+        return modelEvents.hasEvents() || (countLastEvent&&lastEventPulled);
     }
 
     // Pull events from the partition chronology.
@@ -158,6 +160,11 @@ public:
             return events;
         }
     }
+
+    void clear(){
+        modelEvents.clear();
+    }
+
 };
 
 #endif /* MFP_RENDERER_H */
