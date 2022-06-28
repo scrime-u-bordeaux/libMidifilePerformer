@@ -24,8 +24,8 @@ been discarded.
 * `$ cd js`
 * `$ emcmake cmake ..`
 * `$ make`
-* `cd ..`
+* `$ cd ..`
 
 #### Testing
 
-* `node test/mfp_test.js`
+* `$ node test/mfp_test.js`
