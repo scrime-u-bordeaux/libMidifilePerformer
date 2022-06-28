@@ -83,3 +83,9 @@ Notes en vue de futures modifications dans le but de mieux coller au code java :
 * peek : une chronologie avec une méthode peek en plus -> on récupère la tête de queue sans la popper
 * Tous les évènements non-note sont mergés avec les note offs et envoyés d'un coup
 
+### References
+
+interesting further reading about wasm library distribution :
+
+* https://web.dev/loading-wasm/
+* https://nickb.dev/blog/recommendations-when-publishing-a-wasm-library/
