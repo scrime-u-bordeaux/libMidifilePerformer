@@ -1,9 +1,13 @@
 // const fs = require('fs');
 // const { serialize } = require('v8');
-const MidifilePerformer = require('../js/MidifilePerformer.js');
+// import MidifilePerformer from '../dist/MidifilePerformer.js';
+const MidifilePerformer = require('../dist/node/MidifilePerformer.js');
 
 // const data = fs.readFileSync(`${process.cwd()}/assets/mid/chopin-etude-op10-no4.mid`, null);
 
+// const renderer = new MidifilePerformer.Renderer();
+// console.log(MidifilePerformer());
+// MidifilePerformer({ onRuntimeInitialized() {
 MidifilePerformer.onRuntimeInitialized = () => {
   const velocity = 127;
   const channel = 1;
@@ -67,3 +71,4 @@ MidifilePerformer.onRuntimeInitialized = () => {
     }
   }
 }
+// })
