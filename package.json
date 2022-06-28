@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "make clean && make",
-    "test": "node ./test/*.js | tap-spec"
+    "test": "node ./test/tape/*.js | tap-spec"
   },
   "repository": {
     "type": "git",
