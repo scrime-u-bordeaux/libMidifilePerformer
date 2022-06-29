@@ -82,6 +82,10 @@ public:
         return modelEvents.pullEvents();
     }
 
+    Events::Set<Model> pullEventsSet(){
+        return modelEvents.pullEventsSet();
+    }
+
     // Combine a command with the appropriate model events.
     // The combineN methods could be invoked from live commands or by pulling
     // the commandEvents chronology.

@@ -274,6 +274,17 @@ public:
     return res.events;
   }
 
+  Events::Set<T> pullEventsSet() {
+      if(!this->hasEvents()){
+          return {0,std::vector<T>()};
+      }
+
+      Events::Set<T> res = fifo.front();
+      fifo.pop_front();
+
+      return res;
+  }
+
   // Completely reset the chronology.
 
   void clear() {
