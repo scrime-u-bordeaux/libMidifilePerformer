@@ -151,7 +151,7 @@ private:
                 fifo.push_back(insertSet);
 
                 // If it IS empty, register the bufferSet as incomplete.
-                if(insertSet.events.empty())
+                if (insertSet.events.empty())
                     incompleteEvents.push_back({bufferSet,fifo.back()});
                 }
 
@@ -166,9 +166,9 @@ private:
   // Called by finalize() to cleanly push the last sets,
   // AFTER checking for incomplete events one last time.
 
-  void lastPush(){
-      if(complete) checkForEventCompletion();
-      genericPushLogic(true);
+  void lastPush() {
+    if (complete) checkForEventCompletion();
+    genericPushLogic(true);
   }
 
 
@@ -210,7 +210,7 @@ public:
     // Before doing anything else, check whether the current inputSet
     // can complete a previously incomplete event.
 
-    if(complete) checkForEventCompletion();
+    if (complete) checkForEventCompletion();
 
     if (dt > 0) { // Event begins at a different time ; inputSet and bufferSet will change
 
@@ -219,7 +219,7 @@ public:
       // The inputSet is now the most recent input.
       inputSet = {dt, {data}};
 
-  } else { // dt == 0 ; this is a synchronized event ; just append to the input.
+    } else { // dt == 0 ; this is a synchronized event ; just append to the input.
       inputSet.events.push_back(data);
     }
 
