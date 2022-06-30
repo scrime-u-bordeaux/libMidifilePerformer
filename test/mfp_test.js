@@ -128,7 +128,7 @@ function play(commands,renderer){
 
     console.log("Output : ")
 
-    while (renderer.hasEvents() && i < commands.length) {
+    while (renderer.hasEvents(true) && i < commands.length) {
     // while (renderer.hasEvents()) {
 
       //console.log("debug : ",commands[i]);

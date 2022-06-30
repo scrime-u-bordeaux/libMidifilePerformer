@@ -18,7 +18,8 @@ private:
 
   struct incompleteEventSet{
       Events::Set<T> set; // a copy of the set of events left without endings
-      Events::Set<T>& followingEmptySet; // a reference to the empty set that follows
+      Events::Set<T>* followingEmptySet; // a POINTER to the empty set that follows
+      // HAS to be a pointer for chronologies to be assignable. 
   };
 
   // ---------------------------------------------------------------------------
@@ -96,7 +97,7 @@ private:
           auto it = incompleteEvents.begin();
           bool constructResult=false;
           while(it != incompleteEvents.end()) {
-              constructResult=constructInsertSet(inputSet,it->set,it->followingEmptySet);
+              constructResult=constructInsertSet(inputSet,it->set,*(it->followingEmptySet));
               if(constructResult) it=incompleteEvents.erase(it);
               else it++;
           }
@@ -152,7 +153,7 @@ private:
 
                 // If it IS empty, register the bufferSet as incomplete.
                 if(insertSet.events.empty())
-                    incompleteEvents.push_back({bufferSet,fifo.back()});
+                    incompleteEvents.push_back({bufferSet,&fifo.back()});
                 }
 
                 if(last) fifo.push_back(inputSet);
@@ -197,7 +198,7 @@ public:
 
   // Called when a new event is added to the chronology.
 
-  void pushEvent(int dt, T& data) {
+  void pushEvent(int dt, T const& data) {
 
     // This only happens on start or after calling finalize() or clear() ;
     // the inputSet is made to be the first input.
