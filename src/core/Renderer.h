@@ -1,75 +1,181 @@
 #ifndef MFP_RENDERER_H
 #define MFP_RENDERER_H
 
+#include <iostream>
 #include <list>
+#include <map>
 #include "Chronology.h"
 
 template <typename Model, typename Command, typename CommandKey>
 class Renderer {
-    Chronology<Model> modelEvents;
-    Chronology<Command> commandEvents;
 
-    std::map<CommandKey, std::vector<Model>> map3;
+    // -------------------------------------------------------------------------
+    // --------------------------PRIVATE FIELDS---------------------------------
+    // -------------------------------------------------------------------------
+
+    Chronology<Model> modelEvents; // A chronology of the model (partition)
+
+    Chronology<Command> commandEvents; // A chronology of the commands
+
+    bool lastEventPulled; // Indicates whether the last event of the model
+    // has already been pulled, so as to react differently when asked if any are left.
+
+    std::list<std::vector<Model>> orphanedEndings; // A fifo of ending events
+    // that should have been associated to a key press, and have thus been thrown out.
+    // They are associated to releases which would otherwise have no effect.
+    // Note : this list should never be used under normal circumstances
+    // (because if ending events have been associated to a key press,
+    // that means the preprocessing of the model chronology went wrong.)
+
+    std::map<CommandKey, std::vector<Model>> map3; // A map between a start event
+    // and its correspondent ending.
+
+    // -------------------------------------------------------------------------
+
 public:
-    Renderer() {}
+
+    // -------------------------------------------------------------------------
+    // ----------------------CONSTRUCTORS/DESTRUCTORS---------------------------
+    // -------------------------------------------------------------------------
+
+    Renderer() : lastEventPulled(false), modelEvents(Chronology<Model>(false)) {}
+    Renderer(bool completeEvents) : lastEventPulled(false), modelEvents(Chronology<Model>(completeEvents)) {}
+
+    // -------------------------------------------------------------------------
+    // ---------------------------PUBLIC METHODS--------------------------------
+    // -------------------------------------------------------------------------
+
+    // Push a new model event.
+    // For now, command chronologies are not supported, so this is the only push
 
     void pushEvent(int dt, Model event) {
         modelEvents.pushEvent(dt, event);
     }
 
-    // this should be private if implemented at all
+    // This should be private if implemented at all,
+    // since commands will be pushed and pulled live
+
     // void pushCommandEvent(int dt, Command cmd) {
     //     commandEvents.pushEvent(dt, cmd);
     // }
 
+    // Finalize the fixed partition.
+
     void finalize() {
         modelEvents.finalize();
+        //std::cout << "C++ debug : " << std::endl << modelEvents << std::endl;
     }
 
-    bool hasEvents() {
-        return modelEvents.hasEvents();
+    // If the last event isn't pulled, refer to the partition chronology.
+    // If it has, then it is still available, so there are still events.
+    // However, if the user has explicitly stated to exclude it, then it is possible.
+    // (This is necessary when checking to see if the chronology is simply empty.)
+
+    bool hasEvents(bool countLastEvent=true) {
+        return modelEvents.hasEvents() || (countLastEvent&&lastEventPulled);
     }
+
+    // Pull events from the partition chronology.
+    // Is there any use for this ??
 
     std::vector<Model> pullEvents() {
         return modelEvents.pullEvents();
     }
 
-    // the combineN methods could be invoked from live commands or by pulling
+    Events::Set<Model> pullEventsSet(){
+        return modelEvents.pullEventsSet();
+    }
+
+    // Combine a command with the appropriate model events.
+    // The combineN methods could be invoked from live commands or by pulling
     // the commandEvents chronology.
 
     std::vector<Model> combine3(Command cmd) {
         CommandKey key = Events::keyFromData<Command, CommandKey>(cmd);
         std::vector<Model> emptyEvents = {};
 
-        if (Events::isStart<Command>(cmd)) {
-            // TODO : remove this (why is this even here ?)
-            /*
-            if (map3.find(key) == map3.end()) {
-                return emptyEvents; // or throw exception
-            }
-            */
+        // If the command is a press, search for the next event.
 
+        if (Events::isStart<Command>(cmd)) {
+            //std::cout << "start command" << std::endl;
             std::vector<Model> events = modelEvents.pullEvents();
 
+            // If these next events are not all endings :
+            // (isn't this always the case ??)
+            // (isn't it counter-intuitive to press a key and only release notes ?)
+
             if (Events::hasStart<Model>(events)) {
-                std::vector<Model> nextEvents = modelEvents.pullEvents();
+                std::vector<Model> nextEvents = emptyEvents;
+
+                // Get the associated end,
+                // which thanks to the chronology spec,
+                // is always found right next to the beginning.
+
+                try{
+                    nextEvents = modelEvents.pullEvents();
+                    if(Events::hasStart<Model>(nextEvents)) throw nextEvents;
+                }catch(std::vector<Model> nextEvents){
+                    // nextEvents should be an ending set.
+                    std::cout << "ASSOCIATED START IN COMBINE MAP" << std::endl;
+                    exit(1);
+                }
+
+                /*std::cout << "C++ debug : " << cmd << " associated with ";
+                if(!nextEvents.empty()){
+                    for(Model& e : nextEvents){
+                        std::cout << e << std::endl;
+                    }
+                }else{
+                    std::cout << "no release events" << std::endl;
+                }*/
+
+                // Indicate that the last event has been pulled.
+                if(!modelEvents.hasEvents()) lastEventPulled=true;
+
+                // Map the key to this event, so as to bind its release to it.
                 map3[key] = nextEvents;
                 return events;
+
             } else {
+                orphanedEndings.push_back(events);
+                if(!modelEvents.hasEvents()) lastEventPulled=true;
                 return emptyEvents;
             }
         } else {
-            if (map3.find(key) != map3.end()) {
-                std::vector<Model> events = map3[key];
-                map3.erase(key);
-                return events;
-            } else {
-                // this shouldn't happen except if we allow command polyphony
-                // todo : throw exception instead
-                return emptyEvents;
+
+            //std::cout << "end command" << std::endl;
+
+            try{
+                if(map3.find(key) == map3.end() && !lastEventPulled)
+                    throw std::runtime_error("INVALID MAP ENTRY FOR KEY");
+            }catch(std::runtime_error e){
+                // This can only happen if two controllers pressed the same key on the same channel
+                // This should not happen
+                std::cout << e.what() << std::endl;
+                exit(1);
             }
+
+            std::vector<Model> events = map3[key];
+            if(events.empty() && !orphanedEndings.empty()){
+                events = orphanedEndings.front();
+                orphanedEndings.pop_front();
+            }
+            map3.erase(key);
+            return events;
         }
     }
+
+    void clear(){
+        modelEvents.clear();
+    }
+
+    // Replace the partition chronology entirely.
+    // DEEP COPY so that the original partition will be left unmodified.
+
+    void setPartition(Chronology<Model> const newPartition){
+        modelEvents = newPartition;
+    }
+
 };
 
 #endif /* MFP_RENDERER_H */

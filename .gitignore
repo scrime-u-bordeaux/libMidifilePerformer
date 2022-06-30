@@ -9,3 +9,5 @@ test/*
 !test/mfp_test.js
 
 src/midi/*
+
+*.gch
