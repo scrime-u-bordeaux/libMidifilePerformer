@@ -128,11 +128,11 @@ function play(commands,renderer){
 
     console.log("Output : ")
 
-    while (renderer.hasEvents() && i < commands.length) {
+    while (renderer.hasEvents(true) && i < commands.length) {
     // while (renderer.hasEvents()) {
 
       //console.log("debug : ",commands[i]);
-      const events = renderer.combine3(commands[i++]);
+      const events = renderer.combine3(commands[i++], true);
 
       /*console.log('--------------------------');
       for (let j = 0; j < events.size(); j++) {
