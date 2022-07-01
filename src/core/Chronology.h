@@ -154,7 +154,7 @@ private:
 
         // If it IS empty, register the bufferSet as incomplete.
         if (insertSet.events.empty())
-            incompleteEvents.push_back({bufferSet,fifo.back()});
+            incompleteEvents.push_back({bufferSet,&fifo.back()});
       }
 
       if (last) fifo.push_back(inputSet);
