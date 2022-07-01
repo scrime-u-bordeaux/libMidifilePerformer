@@ -48,7 +48,7 @@ public:
     // Push a new model event.
     // For now, command chronologies are not supported, so this is the only push
 
-    void pushEvent(int dt, Model event) {
+    virtual void pushEvent(int dt, Model event) {
         modelEvents.pushEvent(dt, event);
     }
 
@@ -61,7 +61,7 @@ public:
 
     // Finalize the fixed partition.
 
-    void finalize() {
+    virtual void finalize() {
         modelEvents.finalize();
         //std::cout << "C++ debug : " << std::endl << modelEvents << std::endl;
     }
@@ -71,18 +71,18 @@ public:
     // However, if the user has explicitly stated to exclude it, then it is possible.
     // (This is necessary when checking to see if the chronology is simply empty.)
 
-    bool hasEvents(bool countLastEvent = true) {
+    virtual bool hasEvents(bool countLastEvent = true) {
         return modelEvents.hasEvents() || (countLastEvent&&lastEventPulled);
     }
 
     // Pull events from the partition chronology.
     // Is there any use for this ??
 
-    std::vector<Model> pullEvents() {
+    virtual std::vector<Model> pullEvents() {
         return modelEvents.pullEvents();
     }
 
-    Events::Set<Model> pullEventsSet() {
+    virtual Events::Set<Model> pullEventsSet() {
         return modelEvents.pullEventsSet();
     }
 
@@ -90,7 +90,7 @@ public:
     // The combineN methods could be invoked from live commands or by pulling
     // the commandEvents chronology.
 
-    std::vector<Model> combine3(Command cmd) {
+    virtual std::vector<Model> combine3(Command cmd) {
         CommandKey key = Events::keyFromData<Command, CommandKey>(cmd);
         std::vector<Model> emptyEvents = {};
 

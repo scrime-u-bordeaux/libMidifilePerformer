@@ -1,10 +1,36 @@
-#ifndef MFP_MIDIRENDERER_H
-#define MFP_MIDIRENDERER_H
+#ifndef MFP_MFPRENDERER_H
+#define MFP_MFPRENDERER_H
 
-#include "MidiEvents.h"
+#include "MFPEvents.h"
 #include "../core/Renderer.h"
 
-class MidiRenderer {
+/*
+// INHERITANCE
+
+typedef Renderer<noteData, commandData, commandKey> R;
+
+template<>
+std::vector<noteData>
+R::combine3(commandData cmd) {
+  std::vector<noteData> res
+    = R::combine3(cmd);
+
+  // always use command velocity bc we can't pass extra parameters to combine3 :
+  for (auto& note : res) {
+    if (note.on) {
+      note.velocity = cmd.velocity;
+    }
+  }      
+
+  return res;
+}
+//*/
+
+
+//*
+// COMPOSITION
+
+class MFPRenderer {
 private:
   Renderer<noteData, commandData, commandKey> renderer;
 
@@ -36,5 +62,6 @@ public:
 
   void clear() { renderer.clear(); }
 };
+//*/
 
-#endif /* MFP_MIDIRENDERER_H */
+#endif /* MFP_MFPRENDERER_H */

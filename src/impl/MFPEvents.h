@@ -1,5 +1,5 @@
-#ifndef MFP_MIDIEVENTS_H
-#define MFP_MIDIEVENTS_H
+#ifndef MFP_MFPEVENTS_H
+#define MFP_MFPEVENTS_H
 
 #include <iostream>
 #include <cstdint>
@@ -95,4 +95,4 @@ noteKey Events::keyFromData<noteData, noteKey>(noteData const& note) {
 }
 
 
-#endif /* MFP_MIDIEVENTS_H */
+#endif /* MFP_MFPEVENTS_H */
