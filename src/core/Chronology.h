@@ -18,7 +18,8 @@ private:
 
   struct incompleteEventSet{
     Events::Set<T> set; // a copy of the set of events left without endings
-    Events::Set<T>& followingEmptySet; // a reference to the empty set that follows
+    Events::Set<T>* followingEmptySet; // a POINTER to the empty set that follows
+    // HAS to be a pointer for chronologies to be assignable. 
   };
 
   // ---------------------------------------------------------------------------
@@ -91,13 +92,14 @@ private:
   // Checks whether incomplete events can be completed using the current inputSet.
   // Inserts the corresponding endings directly into the empty set that follows them.
 
-  void checkForEventCompletion(){
-    if (!incompleteEvents.empty()){
+  void checkForEventCompletion() {
+    if (!incompleteEvents.empty()) {
       auto it = incompleteEvents.begin();
-      bool constructResult=false;
+      bool constructResult = false;
       while (it != incompleteEvents.end()) {
-        constructResult=constructInsertSet(inputSet,it->set,it->followingEmptySet);
-        if(constructResult) it=incompleteEvents.erase(it);
+        constructResult
+          = constructInsertSet(inputSet,it->set,*(it->followingEmptySet));
+        if (constructResult) it = incompleteEvents.erase(it);
         else it++;
       }
     }
@@ -106,7 +108,7 @@ private:
   // The set of steps followed when modifying or pushing the bufferSet and inputSet.
   // Used by pushEvent to update the chronology, but also lastPush to finalize it.
 
-  void genericPushLogic(bool last){
+  void genericPushLogic(bool last) {
 
     // In this case, the bufferSet is either empty or an ending set
     if (!Events::hasStart<T>(bufferSet)) {
@@ -115,7 +117,7 @@ private:
       if (!Events::hasStart<T>(inputSet)) {
 
         mergeSets(bufferSet,inputSet);
-        if(last) fifo.push_back(bufferSet);
+        if (last) fifo.push_back(bufferSet);
         return;
 
       } else { // the inputSet is a starting set (it has a least one start event)
@@ -127,7 +129,7 @@ private:
           fifo.push_back(bufferSet);
         }
 
-        if(last) fifo.push_back(inputSet);
+        if (last) fifo.push_back(inputSet);
         else bufferSet = inputSet;
 
         return;
@@ -196,7 +198,7 @@ public:
 
   // Called when a new event is added to the chronology.
 
-  void pushEvent(int dt, T& data) {
+  void pushEvent(int dt, T const& data) {
 
     // This only happens on start or after calling finalize() or clear() ;
     // the inputSet is made to be the first input.

@@ -169,6 +169,13 @@ public:
         modelEvents.clear();
     }
 
+    // Replace the partition chronology entirely.
+    // DEEP COPY so that the original partition will be left unmodified.
+
+    void setPartition(Chronology<Model> const newPartition){
+        modelEvents = newPartition;
+    }
+
 };
 
 #endif /* MFP_RENDERER_H */
