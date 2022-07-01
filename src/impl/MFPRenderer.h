@@ -20,7 +20,7 @@ R::combine3(commandData cmd) {
     if (note.on) {
       note.velocity = cmd.velocity;
     }
-  }      
+  }
 
   return res;
 }
@@ -36,9 +36,9 @@ private:
 
 public:
   void pushEvent(int dt, noteData event) { renderer.pushEvent(dt, event); }
-  
+
   void finalize() { renderer.finalize(); }
-  
+
   bool hasEvents(bool countLastEvent = true) {
     return renderer.hasEvents(countLastEvent);
   }
@@ -54,13 +54,15 @@ public:
         if (note.on) {
           note.velocity = cmd.velocity;
         }
-      }      
+      }
     }
 
     return res;
   }
 
   void clear() { renderer.clear(); }
+
+  void setPartition(Chronology<noteData> const newPartition){ renderer.setPartition(newPartition); }
 };
 //*/
 
