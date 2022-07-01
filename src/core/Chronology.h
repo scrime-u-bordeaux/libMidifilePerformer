@@ -19,7 +19,7 @@ private:
   struct incompleteEventSet{
     Events::Set<T> set; // a copy of the set of events left without endings
     Events::Set<T>* followingEmptySet; // a POINTER to the empty set that follows
-    // HAS to be a pointer for chronologies to be assignable. 
+    // HAS to be a pointer for chronologies to be assignable.
   };
 
   // ---------------------------------------------------------------------------
@@ -190,6 +190,7 @@ public:
 
   Chronology() : unmeet(true), date(0), complete(false) {}
   Chronology(bool _complete) : unmeet(true), date(0), complete(_complete) {}
+  Chronology(bool _unmeet, bool _complete) : unmeet(_unmeet), date(0), complete(_complete) {}
   ~Chronology() {}
 
   // ---------------------------------------------------------------------------

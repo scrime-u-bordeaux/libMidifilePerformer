@@ -173,6 +173,7 @@ public:
     // DEEP COPY so that the original partition will be left unmodified.
 
     void setPartition(Chronology<Model> const newPartition){
+        this->clear();
         modelEvents = newPartition;
     }
 
