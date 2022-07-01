@@ -132,7 +132,7 @@ function play(commands,renderer){
     // while (renderer.hasEvents()) {
 
       //console.log("debug : ",commands[i]);
-      const events = renderer.combine3(commands[i++]);
+      const events = renderer.combine3(commands[i++], true);
 
       /*console.log('--------------------------');
       for (let j = 0; j < events.size(); j++) {

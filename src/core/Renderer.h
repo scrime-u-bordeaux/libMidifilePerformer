@@ -48,7 +48,7 @@ public:
     // Push a new model event.
     // For now, command chronologies are not supported, so this is the only push
 
-    void pushEvent(int dt, Model event) {
+    virtual void pushEvent(int dt, Model event) {
         modelEvents.pushEvent(dt, event);
     }
 
@@ -61,7 +61,7 @@ public:
 
     // Finalize the fixed partition.
 
-    void finalize() {
+    virtual void finalize() {
         modelEvents.finalize();
         //std::cout << "C++ debug : " << std::endl << modelEvents << std::endl;
     }
@@ -71,18 +71,18 @@ public:
     // However, if the user has explicitly stated to exclude it, then it is possible.
     // (This is necessary when checking to see if the chronology is simply empty.)
 
-    bool hasEvents(bool countLastEvent=true) {
+    virtual bool hasEvents(bool countLastEvent = true) {
         return modelEvents.hasEvents() || (countLastEvent&&lastEventPulled);
     }
 
     // Pull events from the partition chronology.
     // Is there any use for this ??
 
-    std::vector<Model> pullEvents() {
+    virtual std::vector<Model> pullEvents() {
         return modelEvents.pullEvents();
     }
 
-    Events::Set<Model> pullEventsSet(){
+    virtual Events::Set<Model> pullEventsSet() {
         return modelEvents.pullEventsSet();
     }
 
@@ -90,7 +90,7 @@ public:
     // The combineN methods could be invoked from live commands or by pulling
     // the commandEvents chronology.
 
-    std::vector<Model> combine3(Command cmd) {
+    virtual std::vector<Model> combine3(Command cmd) {
         CommandKey key = Events::keyFromData<Command, CommandKey>(cmd);
         std::vector<Model> emptyEvents = {};
 
@@ -111,10 +111,10 @@ public:
                 // which thanks to the chronology spec,
                 // is always found right next to the beginning.
 
-                try{
+                try {
                     nextEvents = modelEvents.pullEvents();
-                    if(Events::hasStart<Model>(nextEvents)) throw nextEvents;
-                }catch(std::vector<Model> nextEvents){
+                    if (Events::hasStart<Model>(nextEvents)) throw nextEvents;
+                } catch (std::vector<Model> nextEvents) {
                     // nextEvents should be an ending set.
                     std::cout << "ASSOCIATED START IN COMBINE MAP" << std::endl;
                     exit(1);
@@ -130,7 +130,7 @@ public:
                 }*/
 
                 // Indicate that the last event has been pulled.
-                if(!modelEvents.hasEvents()) lastEventPulled=true;
+                if (!modelEvents.hasEvents()) lastEventPulled = true;
 
                 // Map the key to this event, so as to bind its release to it.
                 map3[key] = nextEvents;
@@ -138,17 +138,17 @@ public:
 
             } else {
                 orphanedEndings.push_back(events);
-                if(!modelEvents.hasEvents()) lastEventPulled=true;
+                if (!modelEvents.hasEvents()) lastEventPulled = true;
                 return emptyEvents;
             }
         } else {
 
             //std::cout << "end command" << std::endl;
 
-            try{
-                if(map3.find(key) == map3.end() && !lastEventPulled)
+            try {
+                if (map3.find(key) == map3.end() && !lastEventPulled)
                     throw std::runtime_error("INVALID MAP ENTRY FOR KEY");
-            }catch(std::runtime_error e){
+            } catch (std::runtime_error e) {
                 // This can only happen if two controllers pressed the same key on the same channel
                 // This should not happen
                 std::cout << e.what() << std::endl;
@@ -156,7 +156,7 @@ public:
             }
 
             std::vector<Model> events = map3[key];
-            if(events.empty() && !orphanedEndings.empty()){
+            if (events.empty() && !orphanedEndings.empty()) {
                 events = orphanedEndings.front();
                 orphanedEndings.pop_front();
             }
@@ -165,7 +165,7 @@ public:
         }
     }
 
-    void clear(){
+    virtual void clear() {
         modelEvents.clear();
     }
 

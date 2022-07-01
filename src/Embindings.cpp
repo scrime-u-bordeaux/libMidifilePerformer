@@ -1,5 +1,5 @@
 #include <emscripten/bind.h>
-#include "core/Renderer.h"
+#include "impl/MFPRenderer.h"
 
 using namespace emscripten;
 
@@ -29,7 +29,8 @@ EMSCRIPTEN_BINDINGS(MidifilePerformer) {
     .function("clear",        &Chronology<noteData>::clear)
     ;
 
-  typedef Renderer<noteData, commandData, commandKey> Renderer;
+  // typedef Renderer<noteData, commandData, commandKey> Renderer;
+  typedef MFPRenderer Renderer;
 
   class_<Renderer>("Renderer")
     .constructor()
@@ -37,6 +38,8 @@ EMSCRIPTEN_BINDINGS(MidifilePerformer) {
     .function("finalize",     &Renderer::finalize)
     .function("hasEvents",    &Renderer::hasEvents)
     .function("pullEvents",   &Renderer::pullEvents)
+    .function("pullEventsSet",&Renderer::pullEventsSet)
     .function("combine3",     &Renderer::combine3)
+    .function("clear",        &Renderer::clear)
     ;
 }
