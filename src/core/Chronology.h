@@ -5,13 +5,49 @@
 #include <list>
 #include "Events.h"
 
+namespace ChronologyParams{
+    struct parameters{
+        bool unmeet; // Indicates whether or not to displace end events when possible
+        // ONLY RELEVANT FOR MODEL DATA. DISABLE FOR COMMANDS.
+
+        bool complete; // Indicates whether or not to complete empty sets when possible
+        // ONLY RELEVANT FOR MODEL DATA. DISABLE FOR COMMANDS.
+
+        bool detach; // Indicates whether or not to place the end events that have been
+        // clustered together with their beginning into the next ending set.
+
+        int temporalResolution; // Time threshold under which the events will be considered simultaneous
+        // and merged in a single set.
+        // MIDI Standard is 0.
+
+        uint64_t date; // Unused for now, purpose unknown
+    };
+
+    static parameters const default_params = {
+        .unmeet = true,
+        .complete = false,
+        .detach = true,
+        .temporalResolution = 0,
+        .date = 0
+    };
+
+    static parameters const no_unmeet = {
+        .unmeet = false,
+        .complete = false,
+        .detach = true,
+        .temporalResolution = 0,
+        .date = 0
+    };
+}
+
 template <typename T>
 class Chronology {
-private:
 
   // ---------------------------------------------------------------------------
   // ------------------------------DATA TYPES-----------------------------------
   // ---------------------------------------------------------------------------
+
+private:
 
   // Describes a place where a set containing at least one beginning event
   // was left without immediate ending
@@ -26,13 +62,7 @@ private:
   // ----------------------------PRIVATE FIELDS---------------------------------
   // ---------------------------------------------------------------------------
 
-  bool unmeet; // Indicates whether or not to displace end events when possible
-  // ONLY RELEVANT FOR MODEL DATA. DISABLE FOR COMMANDS.
-
-  bool complete; // Indicates whether or not to complete empty sets when possible
-  // ONLY RELEVANT FOR MODEL DATA. DISABLE FOR COMMANDS.
-
-  uint64_t date; // Unused for now, purpose unknown
+  ChronologyParams::parameters params;
 
   Events::Set<T> inputSet; // Set containing the most recent input
 
@@ -50,21 +80,6 @@ private:
   // ---------------------------PRIVATE METHODS---------------------------------
   // ---------------------------------------------------------------------------
 
-  void mergeSets(Events::Set<T>& greaterSet, Events::Set<T> const& mergedSet) {
-    greaterSet.events.insert(
-      greaterSet.events.end(),
-      mergedSet.events.begin(),
-      mergedSet.events.end()
-    );
-  }
-
-  // Determines if compEvent is an ending event matching refEvent
-
-  bool isMatchingEnd(T const& refEvent, T const& compEvent) {
-    return Events::correspond<T>(refEvent, compEvent)
-        && !Events::isStart<T>(compEvent);
-  }
-
   // Shifts ending events contained in the inputSet into the insertSet
   // if they match start events contained in the bufferSet
 
@@ -76,7 +91,7 @@ private:
       if (Events::isStart<T>(bufferEvent)) {
         auto it = inputSet.events.begin();
         while (it != inputSet.events.end()) {
-          if (isMatchingEnd(bufferEvent,*it)) {
+          if (Events::isMatchingEnd(bufferEvent,*it)) {
             insertSet.events.push_back(*it);
             it = inputSet.events.erase(it);
           } else {
@@ -116,7 +131,7 @@ private:
       // The inputSet is ALSO an ending set. So they can be merged.
       if (!Events::hasStart<T>(inputSet)) {
 
-        mergeSets(bufferSet,inputSet);
+        Events::mergeSets(bufferSet,inputSet);
         if (last) fifo.push_back(bufferSet);
         return;
 
@@ -147,7 +162,7 @@ private:
         Events::Set<T> insertSet{inputSet.dt, {}};
 
         // If unmeet is enabled, try to fill the empty set.
-        if (unmeet) constructInsertSet(inputSet,bufferSet,insertSet);
+        if (params.unmeet) constructInsertSet(inputSet,bufferSet,insertSet);
 
         // Push the set regardless to stay consistent with the format.
         fifo.push_back(insertSet);
@@ -168,10 +183,43 @@ private:
   // AFTER checking for incomplete events one last time.
 
   void lastPush() {
-    if (complete) checkForEventCompletion();
+    if (params.complete) checkForEventCompletion();
     genericPushLogic(true);
   }
 
+  // Move the ending of any events that have been synchronized with their start
+  // (i.e., that do not happen)
+  // into the following ending set.
+
+  void detachEndings(){
+      std::vector<T> starts;
+      std::vector<T> leftoverEndings;
+      for(Events::Set<T>& set : fifo){
+          starts.clear();
+
+          if(!leftoverEndings.empty()){
+              Events::mergeSets(set,leftoverEndings);
+              leftoverEndings.clear();
+          }
+
+          int eventIndex = 0;
+
+          for(T const& event : set.events){
+              if(Events::isStart<T>(event)) starts.push_back(event);
+              else{
+                  for(T const& startEvent : starts){
+                      if(Events::isMatchingEnd(startEvent,event)){
+                          leftoverEndings.push_back(event);
+                          set.events.erase(set.events.begin()+eventIndex);
+                          eventIndex--;
+                          break;
+                      }
+                  }
+              }
+              eventIndex++;
+          }
+      }
+  }
 
   // ---------------------------------------------------------------------------
 
@@ -188,14 +236,17 @@ public:
   // ------------------------CONSTRUCTORS/DESTRUCTORS---------------------------
   // ---------------------------------------------------------------------------
 
-  Chronology() : unmeet(true), date(0), complete(false) {}
-  Chronology(bool _complete) : unmeet(true), date(0), complete(_complete) {}
-  Chronology(bool _unmeet, bool _complete) : unmeet(_unmeet), date(0), complete(_complete) {}
+  Chronology() : params(ChronologyParams::default_params) {}
+  Chronology(ChronologyParams::parameters initParams) : params(initParams) {}
   ~Chronology() {}
 
   // ---------------------------------------------------------------------------
   // -----------------------------PUBLIC METHODS--------------------------------
   // ---------------------------------------------------------------------------
+
+  std::list<Events::Set<noteData>>::iterator begin() { return fifo.begin(); }
+
+  std::list<Events::Set<noteData>>::iterator end() { return fifo.end(); }
 
   // Called when a new event is added to the chronology.
 
@@ -212,9 +263,9 @@ public:
     // Before doing anything else, check whether the current inputSet
     // can complete a previously incomplete event.
 
-    if (complete) checkForEventCompletion();
+    if (params.complete) checkForEventCompletion();
 
-    if (dt > 0) { // Event begins at a different time ; inputSet and bufferSet will change
+    if (dt > params.temporalResolution) { // Event begins at a different time ; inputSet and bufferSet will change
 
       genericPushLogic(false);
 
@@ -242,10 +293,16 @@ public:
       fifo.push_back({1, {}});
     }
 
+    // Ensure no start events are in the same set as their ending.
+
+    if (params.detach) detachEndings();
+
     // Reset the inner sets.
 
     bufferSet.events.clear();
     inputSet.events.clear();
+
+    //std::cout << *this << std::endl;
   }
 
   // Self-explanatory.

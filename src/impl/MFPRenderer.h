@@ -3,6 +3,7 @@
 
 #include "MFPEvents.h"
 #include "../core/Renderer.h"
+#include "../core/Chronology.h"
 
 /*
 // INHERITANCE
@@ -57,6 +58,10 @@ private:
   }
 
 public:
+
+  MFPRenderer() : renderer() {}
+  MFPRenderer(ChronologyParams::parameters params) : renderer(params) {}
+
   void pushEvent(int dt, noteData event) { renderer.pushEvent(dt, event); }
 
   void finalize() { renderer.finalize(); }
@@ -78,6 +83,8 @@ public:
   void clear() { renderer.clear(); }
 
   void setPartition(Chronology<noteData> const newPartition){ renderer.setPartition(newPartition); }
+
+  Chronology<noteData> getPartition() { return renderer.getPartition(); }
 };
 //*/
 
