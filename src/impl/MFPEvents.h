@@ -2,9 +2,24 @@
 #define MFP_MFPEVENTS_H
 
 #include <iostream>
+#include <string>
 #include <cstdint>
 #include <vector>
 #include "../core/Events.h"
+
+std::string noteNames[12] = {"A","A#","B","C","C#","D","D#","E","F","F#","G","G#"};
+
+std::string convertIdToNoteName(uint8_t id){
+    if(id < 21 || id > 108) return "??";
+
+    uint8_t relativeId = id - 21;
+
+    uint8_t name = (relativeId % 12);
+    uint8_t pitch = (relativeId / 12);
+    if(name > 2) pitch++;
+
+    return noteNames[name]+std::to_string(pitch);
+}
 
 // NB : commandKey and noteKey structs are for use as std::map keys
 
@@ -16,8 +31,10 @@ struct commandData {
 };
 
 std::ostream& operator<<(std::ostream& os, struct commandData const &cmd){
+    std::string name = convertIdToNoteName(cmd.id);
     return os << "[ pressed : " << cmd.pressed << " , " <<
-    "id : " << int(cmd.id) << " , " <<
+    "id : " << int(cmd.id) <<
+    " (" << name << "), " <<
     "velocity : " << int(cmd.velocity) << " , " <<
     "channel : " << int(cmd.channel) << " ]";
 }
@@ -44,8 +61,10 @@ struct noteData {
 };
 
 std::ostream& operator<<(std::ostream& os, struct noteData const &note){
+    std::string name = convertIdToNoteName(note.pitch);
     return os << "[ on : " << note.on << " , " <<
-    "id : " << int(note.pitch) << " , " <<
+    "pitch : " << int(note.pitch) <<
+    " (" << name << "), " <<
     "velocity : " << int(note.velocity) << " , " <<
     "channel : " << int(note.channel) << " ]";
 }

@@ -30,11 +30,21 @@ std::ostream& operator<<(std::ostream& os, struct Set<T> const &s){
     return os;
 }
 
+// Self-explanatory
+
 template <typename T>
 bool isStart(T const& e) { return true; }
 
 template <typename T>
 bool correspond(T const& e1, T const& e2) { return false; }
+
+// Determines if compEvent is an ending event matching refEvent
+
+template <typename T>
+bool isMatchingEnd(T const& refEvent, T const& compEvent) {
+  return Events::correspond<T>(refEvent, compEvent)
+      && !Events::isStart<T>(compEvent);
+}
 
 template <typename T>
 bool hasStart(std::vector<T> const& events) {
@@ -42,6 +52,25 @@ bool hasStart(std::vector<T> const& events) {
         if (isStart<T>(e))
             return true;
     return false;
+}
+
+template <typename T>
+void mergeSets(Events::Set<T>& greaterSet, Events::Set<T> const& mergedSet) {
+  greaterSet.events.insert(
+    greaterSet.events.end(),
+    mergedSet.events.begin(),
+    mergedSet.events.end()
+  );
+}
+
+template <typename T>
+
+void mergeSets(Events::Set<T>& greaterSet, std::vector<T> const& mergedSet){
+    greaterSet.events.insert(
+        greaterSet.events.end(),
+        mergedSet.begin(),
+        mergedSet.end()
+    );
 }
 
 template <typename T>

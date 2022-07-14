@@ -38,8 +38,9 @@ public:
     // ----------------------CONSTRUCTORS/DESTRUCTORS---------------------------
     // -------------------------------------------------------------------------
 
-    Renderer() : lastEventPulled(false), modelEvents(Chronology<Model>(false)) {}
-    Renderer(bool completeEvents) : lastEventPulled(false), modelEvents(Chronology<Model>(completeEvents)) {}
+    Renderer() : lastEventPulled(false), modelEvents(Chronology<Model>()) {}
+    Renderer(ChronologyParams::parameters params) :
+        lastEventPulled(false), modelEvents(Chronology<Model>(params)) {}
 
     // -------------------------------------------------------------------------
     // ---------------------------PUBLIC METHODS--------------------------------
@@ -149,8 +150,16 @@ public:
                 if (map3.find(key) == map3.end() && !lastEventPulled)
                     throw std::runtime_error("INVALID MAP ENTRY FOR KEY");
             } catch (std::runtime_error e) {
+                // Original idea (early 2022) :
                 // This can only happen if two controllers pressed the same key on the same channel
                 // This should not happen
+
+                // Update 08/07/22 ; this is FAR more common than we thought.
+                // For example, this happens if the system is launched with a key already held;
+                // The release of that key will trigger the exception because no note was associated with the key.
+
+                // This causes an instant segfault in the ossia binding.
+                // So the question is, should we keep it that way ?
                 std::cout << e.what() << std::endl;
                 exit(1);
             }
@@ -175,6 +184,10 @@ public:
     void setPartition(Chronology<Model> const newPartition){
         this->clear();
         modelEvents = newPartition;
+    }
+
+    Chronology<Model> getPartition(){
+        return modelEvents;
     }
 
 };
