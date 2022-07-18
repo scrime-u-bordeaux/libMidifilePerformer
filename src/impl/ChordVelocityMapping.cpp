@@ -1,9 +1,8 @@
-// #include "MFPEvents.h"
 #include "ChordVelocityMapping.h"
 
 namespace ChordVelocityMapping {
 
-// BASE STRATEGY CLASS WITH UTILITIES //////////////////////////////////////////
+// EXTENDED BASE STRATEGY CLASS ////////////////////////////////////////////////
 
 class ExtendedStrategy : public Strategy {
 public:
@@ -41,15 +40,6 @@ public:
   adjustToCommandVelocity(std::vector<noteData>& notes,
                           uint8_t cmd_velocity) = 0;
 };
-
-// LIST OF STRATEGY IMPLEMENTATIONS ////////////////////////////////////////////
-
-// enum class StrategyType {
-//   SameForAll,
-//   ClippedScaledFromMean,
-//   AdjustedScaledFromMean,
-//   ClippedScaledFromMax
-// };
 
 // STRATEGY IMPLEMENTATIONS ////////////////////////////////////////////////////
 
