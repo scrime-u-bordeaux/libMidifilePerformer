@@ -47,10 +47,12 @@ private:
 public:
 
   MFPRenderer() : renderer() {
-    // setChordRenderingStrategy(
-    //   // ChordVelocityMapping::StrategyType::AdjustedScaledFromMean
-    //   // ChordVelocityMapping::StrategyType::ClippedScaledFromMax
-    // );
+    setChordRenderingStrategy(
+      ChordVelocityMapping::StrategyType::SameForAll
+      // ChordVelocityMapping::StrategyType::ClippedScaledFromMean
+      // ChordVelocityMapping::StrategyType::AdjustedScaledFromMean
+      // ChordVelocityMapping::StrategyType::ClippedScaledFromMax
+    );
   }
 
   MFPRenderer(ChronologyParams::parameters params) : renderer(params) {}
