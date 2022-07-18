@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(${PROJECT_NAME}
   ${PROJECT_SOURCE_DIR}/src/Embindings.cpp
+  ${PROJECT_SOURCE_DIR}/src/impl/ChordVelocityMapping.cpp
 )
 
 set_target_properties(${PROJECT_NAME}
