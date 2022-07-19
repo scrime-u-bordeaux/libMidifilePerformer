@@ -1,5 +1,5 @@
 #include <emscripten/bind.h>
-#include "impl/MFPRenderer.h"
+#include "include/impl/MFPRenderer.h"
 
 using namespace emscripten;
 

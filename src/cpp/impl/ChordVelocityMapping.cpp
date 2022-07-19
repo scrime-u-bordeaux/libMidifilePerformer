@@ -1,4 +1,4 @@
-#include "ChordVelocityMapping.h"
+#include "../../include/impl/ChordVelocityMapping.h"
 
 namespace ChordVelocityMapping {
 
@@ -99,7 +99,7 @@ public ExtendedStrategy {
     // if minRatio is std::abs(-inf), scale will still be 0 => OK
     float minRatio = std::abs(min * ratio - cmd_velocity) / (minVelocity - cmd_velocity);
     float scale = 1.f / std::max(1.f, std::max(maxRatio, minRatio));
-    
+
     for (auto& note : notes) {
       if (note.on && note.velocity != 0) {
         float velocity = cmd_velocity + (note.velocity * ratio - cmd_velocity) * scale;

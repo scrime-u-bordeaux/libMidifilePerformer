@@ -7,13 +7,19 @@
 
 namespace Events {
 
+// Pseudo macros : macros and namespaces don't mix.
+// Still written in macro case for legibility reasons.
+
+const int MERGE_AT_BEGINNING=1;
+const int MERGE_AT_END=0;
+
 template <typename T>
 struct Set {
     int64_t dt;
     std::vector<T> events;
 
     // Used for sorting IN THE CASE OF ABSOLUTE TICKS
-    // (Of use in the ossia score binding)
+    // (No longer in use, but can still come in handy at some point)
 
     bool operator<(const Set<T>& set) const {
         return dt < set.dt;
@@ -55,22 +61,21 @@ bool hasStart(std::vector<T> const& events) {
 }
 
 template <typename T>
-void mergeSets(Events::Set<T>& greaterSet, Events::Set<T> const& mergedSet) {
-  greaterSet.events.insert(
-    greaterSet.events.end(),
-    mergedSet.events.begin(),
-    mergedSet.events.end()
-  );
+
+void mergeSets(Events::Set<T>& greaterSet, std::vector<T> const& mergedSet, int mergePoint=MERGE_AT_END){
+    typename std::vector<T>::iterator it;
+    if(mergePoint==MERGE_AT_BEGINNING) it = greaterSet.events.begin();
+    else it = greaterSet.events.end();
+    greaterSet.events.insert(
+      it,
+      mergedSet.begin(),
+      mergedSet.end()
+    );
 }
 
 template <typename T>
-
-void mergeSets(Events::Set<T>& greaterSet, std::vector<T> const& mergedSet){
-    greaterSet.events.insert(
-        greaterSet.events.end(),
-        mergedSet.begin(),
-        mergedSet.end()
-    );
+void mergeSets(Events::Set<T>& greaterSet, Events::Set<T> const& mergedSet, int mergePoint=MERGE_AT_END) {
+    mergeSets(greaterSet,mergedSet.events,mergePoint);
 }
 
 template <typename T>
