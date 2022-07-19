@@ -7,9 +7,9 @@
 #include <vector>
 #include "../core/Events.h"
 
-std::string noteNames[12] = {"A","A#","B","C","C#","D","D#","E","F","F#","G","G#"};
+static std::string noteNames[12] = {"A","A#","B","C","C#","D","D#","E","F","F#","G","G#"};
 
-std::string convertIdToNoteName(uint8_t id){
+inline std::string convertIdToNoteName(uint8_t id){
     if(id < 21 || id > 108) return "??";
 
     uint8_t relativeId = id - 21;
@@ -30,7 +30,7 @@ struct commandData {
     uint8_t channel;
 };
 
-std::ostream& operator<<(std::ostream& os, struct commandData const &cmd){
+inline std::ostream& operator<<(std::ostream& os, struct commandData const &cmd){
     std::string name = convertIdToNoteName(cmd.id);
     return os << "[ pressed : " << cmd.pressed << " , " <<
     "id : " << int(cmd.id) <<
@@ -60,7 +60,7 @@ struct noteData {
     uint8_t channel;
 };
 
-std::ostream& operator<<(std::ostream& os, struct noteData const &note){
+inline std::ostream& operator<<(std::ostream& os, struct noteData const &note){
     std::string name = convertIdToNoteName(note.pitch);
     return os << "[ on : " << note.on << " , " <<
     "pitch : " << int(note.pitch) <<
@@ -86,30 +86,30 @@ struct noteKey {
 /* * * * * * * * * * * * * specializations for commands * * * * * * * * * * * */
 
 template<>
-bool Events::isStart<commandData>(commandData const& cmd) { return cmd.pressed; }
+inline bool Events::isStart<commandData>(commandData const& cmd) { return cmd.pressed; }
 
 template<>
-bool Events::correspond<commandData>(commandData const& cmd1, commandData const& cmd2) {
+inline bool Events::correspond<commandData>(commandData const& cmd1, commandData const& cmd2) {
     return cmd1.id == cmd2.id && cmd1.channel == cmd2.channel;
 }
 
 template <>
-commandKey Events::keyFromData<commandData, commandKey>(commandData const& cmd) {
+inline commandKey Events::keyFromData<commandData, commandKey>(commandData const& cmd) {
     return { cmd.id, cmd.channel };
 }
 
 //* * * * * * * * * * * * * specializations for notes * * * * * * * * * * * * */
 
 template<>
-bool Events::isStart<noteData>(noteData const& note) { return note.on; }
+inline bool Events::isStart<noteData>(noteData const& note) { return note.on; }
 
 template<>
-bool Events::correspond<noteData>(noteData const& note1, noteData const& note2) {
+inline bool Events::correspond<noteData>(noteData const& note1, noteData const& note2) {
     return note1.pitch == note2.pitch && note1.channel == note2.channel;
 }
 
 template <>
-noteKey Events::keyFromData<noteData, noteKey>(noteData const& note) {
+inline noteKey Events::keyFromData<noteData, noteKey>(noteData const& note) {
     return { note.pitch, note.channel };
 }
 

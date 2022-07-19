@@ -248,6 +248,8 @@ public:
 
   std::list<Events::Set<noteData>>::iterator end() { return fifo.end(); }
 
+  std::size_t size() { return fifo.size(); }
+
   // Called when a new event is added to the chronology.
 
   void pushEvent(int dt, T const& data) {

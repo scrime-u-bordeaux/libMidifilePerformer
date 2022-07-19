@@ -2,6 +2,7 @@
 #define MFP_MFPRENDERER_H
 
 #include "MFPEvents.h"
+#include "ChordVelocityMapping.h"
 #include "../core/Renderer.h"
 #include "../core/Chronology.h"
 
@@ -33,34 +34,32 @@ R::combine3(commandData cmd) {
 
 class MFPRenderer {
 private:
+  std::shared_ptr<ChordVelocityMapping::Strategy> chordStrategy;
   Renderer<noteData, commandData, commandKey> renderer;
 
-  float computeMeanVelocity(std::vector<noteData> const& noteVector) const{
-      if(noteVector.empty()) return 0;
-      uint8_t sum = 0;
-      for(auto& note : noteVector){
-          sum+=note.velocity;
-      }
-      return sum / noteVector.size();
-  }
-
-  void adjustToCommandVelocity(std::vector<noteData>& noteVector, uint8_t cmd_velocity) const{
-      float mean_velocity = computeMeanVelocity(noteVector);
-      if(mean_velocity==0) return;
-
-      for (auto& note : noteVector) {
-        if (note.on) {
-          float proportion = note.velocity / mean_velocity;
-          float adjustedVelocity = proportion * cmd_velocity;
-          note.velocity = uint8_t(adjustedVelocity);
-        }
-      }
+  void adjustToCommandVelocity(std::vector<noteData>& notes,
+                               uint8_t cmd_velocity) const {
+    if (chordStrategy.get() == nullptr) return;
+    chordStrategy->adjustToCommandVelocity(notes, cmd_velocity);
+    // dynamic_cast<std::type_info(*strategy)>(strategy)->adjustToCommandVelocity(notes, cmd_velocity);
   }
 
 public:
 
-  MFPRenderer() : renderer() {}
+  MFPRenderer() : renderer() {
+    setChordRenderingStrategy(
+      ChordVelocityMapping::StrategyType::SameForAll
+      // ChordVelocityMapping::StrategyType::ClippedScaledFromMean
+      // ChordVelocityMapping::StrategyType::AdjustedScaledFromMean
+      // ChordVelocityMapping::StrategyType::ClippedScaledFromMax
+    );
+  }
+
   MFPRenderer(ChronologyParams::parameters params) : renderer(params) {}
+  
+  void setChordRenderingStrategy(ChordVelocityMapping::StrategyType s) {
+    chordStrategy = ChordVelocityMapping::createStrategy(s);
+  }
 
   void pushEvent(int dt, noteData event) { renderer.pushEvent(dt, event); }
 
@@ -74,9 +73,10 @@ public:
 
   Events::Set<noteData> pullEventsSet() { return renderer.pullEventsSet(); }
 
-  std::vector<noteData> combine3(commandData cmd, bool useCommandVelocity = true) {
+  std::vector<noteData> combine3(commandData cmd,
+                                 bool useCommandVelocity = true) {
     std::vector<noteData> res = renderer.combine3(cmd);
-    if (useCommandVelocity) adjustToCommandVelocity(res,cmd.velocity);
+    if (useCommandVelocity) adjustToCommandVelocity(res, cmd.velocity);
     return res;
   }
 
