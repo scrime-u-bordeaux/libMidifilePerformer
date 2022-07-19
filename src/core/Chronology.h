@@ -197,7 +197,7 @@ private:
       for(Events::Set<T>& set : fifo){
           starts.clear();
 
-          if(!leftoverEndings.empty()){
+          if(!leftoverEndings.empty() && !set.events.empty()){
               Events::mergeSets(set,leftoverEndings);
               leftoverEndings.clear();
           }
