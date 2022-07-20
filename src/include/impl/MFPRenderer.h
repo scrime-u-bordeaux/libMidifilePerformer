@@ -56,7 +56,7 @@ public:
   }
 
   MFPRenderer(ChronologyParams::parameters params) : renderer(params) {}
-  
+
   void setChordRenderingStrategy(ChordVelocityMapping::StrategyType s) {
     chordStrategy = ChordVelocityMapping::createStrategy(s);
   }

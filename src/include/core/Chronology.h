@@ -13,8 +13,8 @@ namespace ChronologyParams{
         bool complete; // Indicates whether or not to complete empty sets when possible
         // ONLY RELEVANT FOR MODEL DATA. DISABLE FOR COMMANDS.
 
-        bool detach; // Indicates whether or not to place the end events that have been
-        // clustered together with their beginning into the next ending set.
+        bool shift; // Indicates whether or not to place the end events that have been
+        // clustered together with their beginning before that beginning.
 
         int temporalResolution; // Time threshold under which the events will be considered simultaneous
         // and merged in a single set.
@@ -26,7 +26,7 @@ namespace ChronologyParams{
     static parameters const default_params = {
         .unmeet = true,
         .complete = false,
-        .detach = true,
+        .shift = true,
         .temporalResolution = 0,
         .date = 0
     };
@@ -34,7 +34,7 @@ namespace ChronologyParams{
     static parameters const no_unmeet = {
         .unmeet = false,
         .complete = false,
-        .detach = true,
+        .shift = true,
         .temporalResolution = 0,
         .date = 0
     };
@@ -187,20 +187,16 @@ private:
     genericPushLogic(true);
   }
 
-  // Move the ending of any events that have been synchronized with their start
-  // (i.e., that do not happen)
-  // into the following ending set.
+  // Move the ending of any events that have been synchronized with an identical start and placed later in the set
+  // (causing that start not to play)
+  // before said start in the set.
 
-  void detachEndings(){
+  void shiftSameEventEndings(){
       std::vector<T> starts;
-      std::vector<T> leftoverEndings;
+      std::vector<T> endings;
       for(Events::Set<T>& set : fifo){
           starts.clear();
-
-          if(!leftoverEndings.empty() && !set.events.empty()){
-              Events::mergeSets(set,leftoverEndings);
-              leftoverEndings.clear();
-          }
+          endings.clear();
 
           int eventIndex = 0;
 
@@ -209,7 +205,7 @@ private:
               else{
                   for(T const& startEvent : starts){
                       if(Events::isMatchingEnd(startEvent,event)){
-                          leftoverEndings.push_back(event);
+                          endings.push_back(event);
                           set.events.erase(set.events.begin()+eventIndex);
                           eventIndex--;
                           break;
@@ -218,6 +214,8 @@ private:
               }
               eventIndex++;
           }
+
+          Events::mergeSets(set,endings,Events::MERGE_AT_BEGINNING);
       }
   }
 
@@ -244,9 +242,9 @@ public:
   // -----------------------------PUBLIC METHODS--------------------------------
   // ---------------------------------------------------------------------------
 
-  std::list<Events::Set<noteData>>::iterator begin() { return fifo.begin(); }
+  typename std::list<Events::Set<T>>::iterator begin() { return fifo.begin(); }
 
-  std::list<Events::Set<noteData>>::iterator end() { return fifo.end(); }
+  typename std::list<Events::Set<T>>::iterator end() { return fifo.end(); }
 
   std::size_t size() { return fifo.size(); }
 
@@ -274,7 +272,7 @@ public:
       // The inputSet is now the most recent input.
       inputSet = {dt, {data}};
 
-    } else { // dt == 0 ; this is a synchronized event ; just append to the input.
+    } else { // this is a synchronized event ; just append to the input.
       inputSet.events.push_back(data);
     }
 
@@ -295,9 +293,9 @@ public:
       fifo.push_back({1, {}});
     }
 
-    // Ensure no start events are in the same set as their ending.
+    // Ensure no start events precede a corresponding end event in any set.
 
-    if (params.detach) detachEndings();
+    if (params.shift) shiftSameEventEndings();
 
     // Reset the inner sets.
 
