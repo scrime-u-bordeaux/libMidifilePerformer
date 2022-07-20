@@ -13,7 +13,7 @@ namespace ChronologyParams{
         bool complete; // Indicates whether or not to complete empty sets when possible
         // ONLY RELEVANT FOR MODEL DATA. DISABLE FOR COMMANDS.
 
-        bool shift; // Indicates whether or not to place the end events that have been
+        Events::correspondOption shiftMode; // Indicates whether or not to place the end events that have been
         // clustered together with their beginning before that beginning.
 
         int temporalResolution; // Time threshold under which the events will be considered simultaneous
@@ -26,7 +26,6 @@ namespace ChronologyParams{
     static parameters const default_params = {
         .unmeet = true,
         .complete = false,
-        .shift = true,
         .temporalResolution = 0,
         .date = 0
     };
@@ -34,7 +33,6 @@ namespace ChronologyParams{
     static parameters const no_unmeet = {
         .unmeet = false,
         .complete = false,
-        .shift = true,
         .temporalResolution = 0,
         .date = 0
     };
@@ -91,7 +89,7 @@ private:
       if (Events::isStart<T>(bufferEvent)) {
         auto it = inputSet.events.begin();
         while (it != inputSet.events.end()) {
-          if (Events::isMatchingEnd(bufferEvent,*it)) {
+          if (Events::isMatchingEnd(bufferEvent,*it,params.shiftMode)) {
             insertSet.events.push_back(*it);
             it = inputSet.events.erase(it);
           } else {
@@ -192,30 +190,38 @@ private:
   // before said start in the set.
 
   void shiftSameEventEndings(){
-      std::vector<T> starts;
-      std::vector<T> endings;
+      std::vector<T> otherEvents;
+      std::vector<T> endingsToShift;
+      bool matched=false;
+
       for(Events::Set<T>& set : fifo){
-          starts.clear();
-          endings.clear();
+          otherEvents.clear();
+          endingsToShift.clear();
+          matched=false;
 
           int eventIndex = 0;
 
           for(T const& event : set.events){
-              if(Events::isStart<T>(event)) starts.push_back(event);
-              else{
-                  for(T const& startEvent : starts){
-                      if(Events::isMatchingEnd(startEvent,event)){
-                          endings.push_back(event);
-                          set.events.erase(set.events.begin()+eventIndex);
-                          eventIndex--;
-                          break;
-                      }
+
+              for(T const& otherEvent : otherEvents){
+
+                  if(Events::isStart<T>(otherEvent)
+                  && Events::isMatchingEnd(otherEvent,event,params.shiftMode)){
+                      matched=true;
+                      endingsToShift.push_back(event);
+                      break;
                   }
+
               }
-              eventIndex++;
+
+              if(!matched) otherEvents.push_back(event);
+              matched = false;
+
           }
 
-          Events::mergeSets(set,endings,Events::MERGE_AT_BEGINNING);
+          Events::Set<T> newSet = { set.dt, endingsToShift };
+          Events::mergeSets(newSet,otherEvents);
+          set = newSet;
       }
   }
 
@@ -295,7 +301,7 @@ public:
 
     // Ensure no start events precede a corresponding end event in any set.
 
-    if (params.shift) shiftSameEventEndings();
+    shiftSameEventEndings();
 
     // Reset the inner sets.
 

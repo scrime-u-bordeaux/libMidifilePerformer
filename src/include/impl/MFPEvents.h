@@ -83,6 +83,10 @@ struct noteKey {
     };
 };
 
+namespace Events {
+    enum class correspondOption { PITCH_AND_CHANNEL, PITCH_ONLY, NONE };
+}
+
 /* * * * * * * * * * * * * specializations for commands * * * * * * * * * * * */
 
 template<>
@@ -91,6 +95,11 @@ inline bool Events::isStart<commandData>(commandData const& cmd) { return cmd.pr
 template<>
 inline bool Events::correspond<commandData>(commandData const& cmd1, commandData const& cmd2) {
     return cmd1.id == cmd2.id && cmd1.channel == cmd2.channel;
+}
+
+template<>
+inline bool Events::correspond<commandData>(commandData const& cmd1, commandData const& cmd2, correspondOption o) {
+    return (o!=correspondOption::NONE) && cmd1.id == cmd2.id && (o==correspondOption::PITCH_ONLY || cmd1.channel == cmd2.channel);
 }
 
 template <>
@@ -104,8 +113,8 @@ template<>
 inline bool Events::isStart<noteData>(noteData const& note) { return note.on; }
 
 template<>
-inline bool Events::correspond<noteData>(noteData const& note1, noteData const& note2) {
-    return note1.pitch == note2.pitch && note1.channel == note2.channel;
+inline bool Events::correspond<noteData>(noteData const& note1, noteData const& note2, correspondOption o) {
+    return (o!=correspondOption::NONE) && note1.pitch == note2.pitch && (o==correspondOption::PITCH_ONLY || note1.channel == note2.channel);
 }
 
 template <>
