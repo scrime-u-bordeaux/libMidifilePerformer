@@ -23,14 +23,14 @@ namespace ChronologyParams{
         uint64_t date; // Unused for now, purpose unknown
     };
 
-    static parameters const default_params = {
+    static parameters constexpr default_params = {
         .unmeet = true,
         .complete = false,
         .temporalResolution = 0,
         .date = 0
     };
 
-    static parameters const no_unmeet = {
+    static parameters constexpr no_unmeet = {
         .unmeet = false,
         .complete = false,
         .temporalResolution = 0,
@@ -130,12 +130,13 @@ private:
       if (!Events::hasStart<T>(inputSet)) {
 
         Events::mergeSets(bufferSet,inputSet);
+        bufferSet.dt += inputSet.dt;
         if (last) fifo.push_back(bufferSet);
         return;
 
       } else { // the inputSet is a starting set (it has a least one start event)
 
-        // Guard against pushing an ending set in the first position of the fifo
+        // Guard against pushing an empty set in the first position of the fifo
         // Pushing an empty set in other cases is fine, it is an artifical ending
 
         if (!fifo.empty()) {
@@ -166,7 +167,7 @@ private:
         fifo.push_back(insertSet);
 
         // If it IS empty, register the bufferSet as incomplete.
-        if (insertSet.events.empty())
+        if (params.complete && insertSet.events.empty())
             incompleteEvents.push_back({bufferSet,&fifo.back()});
       }
 
