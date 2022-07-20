@@ -6,32 +6,6 @@
 #include "../core/Renderer.h"
 #include "../core/Chronology.h"
 
-/*
-// INHERITANCE
-
-typedef Renderer<noteData, commandData, commandKey> R;
-
-template<>
-std::vector<noteData>
-R::combine3(commandData cmd) {
-  std::vector<noteData> res
-    = R::combine3(cmd);
-
-  // always use command velocity bc we can't pass extra parameters to combine3 :
-  for (auto& note : res) {
-    if (note.on) {
-      note.velocity = cmd.velocity;
-    }
-  }
-
-  return res;
-}
-//*/
-
-
-//*
-// COMPOSITION
-
 class MFPRenderer {
 private:
   std::shared_ptr<ChordVelocityMapping::Strategy> chordStrategy;
@@ -41,7 +15,6 @@ private:
                                uint8_t cmd_velocity) const {
     if (chordStrategy.get() == nullptr) return;
     chordStrategy->adjustToCommandVelocity(notes, cmd_velocity);
-    // dynamic_cast<std::type_info(*strategy)>(strategy)->adjustToCommandVelocity(notes, cmd_velocity);
   }
 
 public:
@@ -86,6 +59,5 @@ public:
 
   Chronology<noteData> getPartition() { return renderer.getPartition(); }
 };
-//*/
 
 #endif /* MFP_MFPRENDERER_H */
