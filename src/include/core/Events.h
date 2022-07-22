@@ -44,11 +44,22 @@ bool isStart(T const& e) { return true; }
 template <typename T>
 bool correspond(T const& e1, T const& e2) { return false; }
 
+enum class correspondOption : int; //define in implementations
+
+template <typename T>
+bool correspond(T const& e1, T const& e2, correspondOption o) { return false; }
+
 // Determines if compEvent is an ending event matching refEvent
 
 template <typename T>
 bool isMatchingEnd(T const& refEvent, T const& compEvent) {
   return Events::correspond<T>(refEvent, compEvent)
+      && !Events::isStart<T>(compEvent);
+}
+
+template <typename T>
+bool isMatchingEnd(T const& refEvent, T const& compEvent, correspondOption o) {
+  return Events::correspond<T>(refEvent, compEvent, o)
       && !Events::isStart<T>(compEvent);
 }
 
@@ -61,6 +72,8 @@ bool hasStart(std::vector<T> const& events) {
 }
 
 template <typename T>
+
+// Merging at the beginning of a vector should be avoided, it is an inefficient operation that requires element shifting
 
 void mergeSets(Events::Set<T>& greaterSet, std::vector<T> const& mergedSet, int mergePoint=MERGE_AT_END){
     typename std::vector<T>::iterator it;
