@@ -58,6 +58,24 @@ struct noteData {
     uint8_t pitch;
     uint8_t velocity;
     uint8_t channel;
+
+    bool operator==(const noteData& note) const {
+        return (
+            on == note.on &&
+            pitch == note.pitch &&
+            velocity == note.velocity &&
+            channel == note.channel
+        );
+    }
+
+    bool operator!=(const noteData& note) const {
+        return (
+            on != note.on ||
+            pitch != note.pitch ||
+            velocity != note.velocity ||
+            channel != note.channel
+        );
+    }
 };
 
 inline std::ostream& operator<<(std::ostream& os, struct noteData const &note){
