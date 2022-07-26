@@ -6,7 +6,7 @@
 #include <map>
 #include "Chronology.h"
 
-template <typename Model, typename Command, typename CommandKey>
+template <typename Model, typename Command, typename CommandKey, typename NoteKey>
 class Renderer {
 
     // -------------------------------------------------------------------------
@@ -29,6 +29,9 @@ class Renderer {
 
     std::map<CommandKey, std::vector<Model>> map3; // A map between a start event
     // and its correspondent ending.
+    std::map<NoteKey, CommandKey> antiStealMap; // A map keeping track of which key
+    // is associated with each combination of pitch and channel,
+    // in order to prevent voice stealing.
 
     // -------------------------------------------------------------------------
 
@@ -95,15 +98,41 @@ public:
         CommandKey key = Events::keyFromData<Command, CommandKey>(cmd);
         std::vector<Model> emptyEvents = {};
 
-        // If the command is a press, search for the next event.
+        // If the command is a key press, search for the next event.
 
         if (Events::isStart<Command>(cmd)) {
             //std::cout << "start command" << std::endl;
             std::vector<Model> events = modelEvents.pullEvents();
 
-            // If these next events are not all endings :
-            // (isn't this always the case ??)
-            // (isn't it counter-intuitive to press a key and only release notes ?)
+            // For every event associated with this key press,
+            // See if it the same note and pitch have been assigned to another key press.
+            // If so, delete this note-pitch combination's release
+            // from the set of release events assigned to that other key's release.
+
+            for(Model& event : events){
+                NoteKey note = Events::keyFromData<Model, NoteKey>(event);
+
+                if(antiStealMap.find(note)!=antiStealMap.end()){
+
+                    // This means this pitch-channel combination is associated
+                    // with another key.
+
+                    CommandKey assignedKey = antiStealMap[note];
+                    std::vector<Model>& endEvents = map3[assignedKey];
+                    auto it = endEvents.begin();
+
+                    while(it!=endEvents.end()){
+                        if(it->pitch == note.pitch && it->channel == note.channel)
+                            it=endEvents.erase(it); // prevent the other key from releasing the note
+                        else it++;
+                    }
+                }
+
+                antiStealMap[note] = key; // register the new key as this note's owner
+            }
+
+            // Then, if the event set that has been pulled is a starting set
+            // (Which should always be the case) :
 
             if (Events::hasStart<Model>(events)) {
                 std::vector<Model> nextEvents = emptyEvents;
@@ -133,36 +162,32 @@ public:
                 // Indicate that the last event has been pulled.
                 if (!modelEvents.hasEvents()) lastEventPulled = true;
 
+                // Manage multi-controller interaction :
+                // If this same key already has events registered in the combine map,
+                // Trigger them, and then register the new ones.
+
+                if(map3.find(key) != map3.end()){
+                    std::vector<Model> extraEvents = map3[key];
+                    events.insert(events.end(),extraEvents.begin(),extraEvents.end());
+                    // Should we rather append them to nextEvents ?
+                }
+
                 // Map the key to this event, so as to bind its release to it.
                 map3[key] = nextEvents;
+
                 return events;
 
-            } else {
+            } else { // this should not happen, but the fallback is here
                 orphanedEndings.push_back(events);
                 if (!modelEvents.hasEvents()) lastEventPulled = true;
                 return emptyEvents;
             }
-        } else {
+        } else { // the key was released, so we look in the map to see what to trigger
 
             //std::cout << "end command" << std::endl;
 
-            try {
-                if (map3.find(key) == map3.end() && !lastEventPulled)
-                    throw std::runtime_error("INVALID MAP ENTRY FOR KEY");
-            } catch (std::runtime_error e) {
-                // Original idea (early 2022) :
-                // This can only happen if two controllers pressed the same key on the same channel
-                // This should not happen
-
-                // Update 08/07/22 ; this is FAR more common than we thought.
-                // For example, this happens if the system is launched with a key already held;
-                // The release of that key will trigger the exception because no note was associated with the key.
-
-                // This causes an instant segfault in the ossia binding.
-                // So the question is, should we keep it that way ?
-                std::cout << e.what() << std::endl;
-                exit(1);
-            }
+            if (map3.find(key) == map3.end() && !lastEventPulled)
+                    return emptyEvents;
 
             std::vector<Model> events = map3[key];
             if (events.empty() && !orphanedEndings.empty()) {
