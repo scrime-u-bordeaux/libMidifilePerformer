@@ -23,6 +23,7 @@ if(BUILD_TESTING)
         chordVelocityMapping.test.cpp
         voiceStealing.test.cpp
         invalidMapEntries.test.cpp
+        midiFiles.test.cpp
     )
 
     target_link_libraries(
