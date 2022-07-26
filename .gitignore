@@ -6,7 +6,7 @@ assets/
 js/
 cmake/
 cmake-build/
-build /
+build/
 
 Makefile
 # test/*
