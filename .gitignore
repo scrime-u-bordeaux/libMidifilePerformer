@@ -4,9 +4,14 @@ Thumbs.db
 
 assets/
 js/
+cmake/
+cmake-build/
+build/
 
-test/*
-!test/mfp_test.js
+Makefile
+# test/*
+# !test/mfp_test.js
+test/js/
 
 src/midi/*
 
