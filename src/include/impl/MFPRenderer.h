@@ -2,24 +2,24 @@
 #define MFP_MFPRENDERER_H
 
 #include "MFPEvents.h"
+#include "VoiceStealing.h"
 #include "ChordVelocityMapping.h"
 #include "../core/Renderer.h"
 #include "../core/Chronology.h"
 
 class MFPRenderer {
 private:
+  std::shared_ptr<VoiceStealing::Strategy> stealingStrategy;
   std::shared_ptr<ChordVelocityMapping::Strategy> chordStrategy;
   Renderer<noteData, commandData, commandKey> renderer;
 
-  void adjustToCommandVelocity(std::vector<noteData>& notes,
-                               uint8_t cmd_velocity) const {
-    if (chordStrategy.get() == nullptr) return;
-    chordStrategy->adjustToCommandVelocity(notes, cmd_velocity);
-  }
+  void setDefaultStrategies() {
+    setVoiceStealingStrategy(
+      // VoiceStealing::StrategyType::None
+      VoiceStealing::StrategyType::LastNoteOffWins
+      // VoiceStealing::StrategyType::OnlyStaccato
+    );
 
-public:
-
-  MFPRenderer() : renderer() {
     setChordRenderingStrategy(
       ChordVelocityMapping::StrategyType::SameForAll
       // ChordVelocityMapping::StrategyType::ClippedScaledFromMean
@@ -28,7 +28,35 @@ public:
     );
   }
 
-  MFPRenderer(ChronologyParams::parameters params) : renderer(params) {}
+  void performVoiceStealing(
+    std::vector<noteData>& notes,
+    commandData cmd
+  ) const {
+    if (stealingStrategy.get() == nullptr) return;
+    stealingStrategy->performVoiceStealing(notes, cmd);
+  }
+
+  void adjustToCommandVelocity(
+    std::vector<noteData>& notes,
+    uint8_t cmd_velocity
+  ) const {
+    if (chordStrategy.get() == nullptr) return;
+    chordStrategy->adjustToCommandVelocity(notes, cmd_velocity);
+  }
+
+public:
+
+  MFPRenderer() : renderer() {
+    setDefaultStrategies();
+  }
+
+  MFPRenderer(ChronologyParams::parameters params) : renderer(params) {
+    setDefaultStrategies();
+  }
+
+  void setVoiceStealingStrategy(VoiceStealing::StrategyType s) {
+    stealingStrategy = VoiceStealing::createStrategy(s);
+  }
 
   void setChordRenderingStrategy(ChordVelocityMapping::StrategyType s) {
     chordStrategy = ChordVelocityMapping::createStrategy(s);
@@ -49,6 +77,7 @@ public:
   std::vector<noteData> combine3(commandData cmd,
                                  bool useCommandVelocity = true) {
     std::vector<noteData> res = renderer.combine3(cmd);
+    performVoiceStealing(res, cmd);
     if (useCommandVelocity) adjustToCommandVelocity(res, cmd.velocity);
     return res;
   }

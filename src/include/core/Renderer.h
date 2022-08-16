@@ -133,6 +133,16 @@ public:
                 // Indicate that the last event has been pulled.
                 if (!modelEvents.hasEvents()) lastEventPulled = true;
 
+                // Manage multi-controller interaction :
+                // If this same key already has events registered in the combine map,
+                // Trigger them, and then register the new ones.
+
+                if (map3.find(key) != map3.end()) {
+                    std::vector<Model> extraEvents = map3[key];
+                    events.insert(events.end(), extraEvents.begin(), extraEvents.end());
+                    // Should we rather append them to nextEvents ?
+                }
+
                 // Map the key to this event, so as to bind its release to it.
                 map3[key] = nextEvents;
                 return events;
@@ -146,6 +156,7 @@ public:
 
             //std::cout << "end command" << std::endl;
 
+            /*
             try {
                 if (map3.find(key) == map3.end() && !lastEventPulled)
                     throw std::runtime_error("INVALID MAP ENTRY FOR KEY");
@@ -163,12 +174,17 @@ public:
                 std::cout << e.what() << std::endl;
                 exit(1);
             }
+            //*/
+            
+            if (map3.find(key) == map3.end() && !lastEventPulled)
+                return emptyEvents;
 
             std::vector<Model> events = map3[key];
             if (events.empty() && !orphanedEndings.empty()) {
                 events = orphanedEndings.front();
                 orphanedEndings.pop_front();
             }
+
             map3.erase(key);
             return events;
         }
