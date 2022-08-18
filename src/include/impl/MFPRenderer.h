@@ -9,7 +9,7 @@
 class MFPRenderer {
 private:
   std::shared_ptr<ChordVelocityMapping::Strategy> chordStrategy;
-  Renderer<noteData, commandData, commandKey> renderer;
+  Renderer<noteData, commandData, commandKey, noteKey> renderer;
 
   void adjustToCommandVelocity(std::vector<noteData>& notes,
                                uint8_t cmd_velocity) const {
