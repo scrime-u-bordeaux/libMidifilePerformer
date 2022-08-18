@@ -112,7 +112,7 @@ public:
             for (Model& event : events) {
                 ModelKey modelKey = Events::keyFromData<Model, ModelKey>(event);
 
-                if (antiStealMap.find(note) != antiStealMap.end()) {
+                if (antiStealMap.find(modelKey) != antiStealMap.end()) {
 
                     // This means this pitch-channel combination is associated
                     // with another key.
@@ -122,8 +122,7 @@ public:
                     auto it = endEvents.begin();
 
                     while (it != endEvents.end()){
-                        if (correspond(*it, modelKey))
-                        // if(it->pitch == note.pitch && it->channel == note.channel)
+                        if (Events::correspond<Model>(*it, event))
                             it = endEvents.erase(it); // prevent the other key from releasing the note
                         else it++;
                     }

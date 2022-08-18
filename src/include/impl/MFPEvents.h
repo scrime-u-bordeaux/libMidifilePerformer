@@ -113,6 +113,11 @@ template<>
 inline bool Events::isStart<noteData>(noteData const& note) { return note.on; }
 
 template<>
+inline bool Events::correspond<noteData>(noteData const& note1, noteData const& note2) {
+    return (note1.pitch == note2.pitch && note1.channel == note2.channel);
+}
+
+template<>
 inline bool Events::correspond<noteData>(noteData const& note1, noteData const& note2, correspondOption o) {
     return (o!=correspondOption::NONE) && note1.pitch == note2.pitch && (o==correspondOption::PITCH_ONLY || note1.channel == note2.channel);
 }
