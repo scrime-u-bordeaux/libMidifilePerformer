@@ -60,6 +60,9 @@ private:
   // ----------------------------PRIVATE FIELDS---------------------------------
   // ---------------------------------------------------------------------------
 
+  bool finalized;
+  std::vector<std::vector<T>> sequence;
+
   ChronologyParams::parameters params;
 
   Events::Set<T> inputSet; // Set containing the most recent input
@@ -310,6 +313,10 @@ public:
     inputSet.events.clear();
 
     //std::cout << *this << std::endl;
+  }
+
+  std::vector<std::vector<T>> getChronologyAsVector() {
+    
   }
 
   // Self-explanatory.
