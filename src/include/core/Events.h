@@ -15,15 +15,15 @@ const int MERGE_AT_END=0;
 
 template <typename T>
 struct Set {
-    int64_t dt;
-    std::vector<T> events;
+  int64_t dt;
+  std::vector<T> events;
 
-    // Used for sorting IN THE CASE OF ABSOLUTE TICKS
-    // (No longer in use, but can still come in handy at some point)
+  // Used for sorting IN THE CASE OF ABSOLUTE TICKS
+  // (No longer in use, but can still come in handy at some point)
 
-    bool operator<(const Set<T>& set) const {
-        return dt < set.dt;
-    }
+  bool operator<(const Set<T>& set) const {
+      return dt < set.dt;
+  }
 };
 
 template <typename T>
@@ -65,30 +65,38 @@ bool isMatchingEnd(T const& refEvent, T const& compEvent, correspondOption o) {
 
 template <typename T>
 bool hasStart(std::vector<T> const& events) {
-    for (auto& e : events)
-        if (isStart<T>(e))
-            return true;
-    return false;
+  for (auto& e : events)
+    if (isStart<T>(e))
+      return true;
+  return false;
+}
+
+// Merging at the beginning of a vector should be avoided,
+// it is an inefficient operation that requires element shifting
+
+template <typename T>
+void mergeSets(
+  Events::Set<T>& greaterSet,
+  std::vector<T> const& mergedSet,
+  int mergePoint = MERGE_AT_END
+) {
+  typename std::vector<T>::iterator it;
+  if (mergePoint == MERGE_AT_BEGINNING) it = greaterSet.events.begin();
+  else it = greaterSet.events.end();
+  greaterSet.events.insert(
+    it,
+    mergedSet.begin(),
+    mergedSet.end()
+  );
 }
 
 template <typename T>
-
-// Merging at the beginning of a vector should be avoided, it is an inefficient operation that requires element shifting
-
-void mergeSets(Events::Set<T>& greaterSet, std::vector<T> const& mergedSet, int mergePoint=MERGE_AT_END){
-    typename std::vector<T>::iterator it;
-    if(mergePoint==MERGE_AT_BEGINNING) it = greaterSet.events.begin();
-    else it = greaterSet.events.end();
-    greaterSet.events.insert(
-      it,
-      mergedSet.begin(),
-      mergedSet.end()
-    );
-}
-
-template <typename T>
-void mergeSets(Events::Set<T>& greaterSet, Events::Set<T> const& mergedSet, int mergePoint=MERGE_AT_END) {
-    mergeSets(greaterSet,mergedSet.events,mergePoint);
+void mergeSets(
+  Events::Set<T>& greaterSet,
+  Events::Set<T> const& mergedSet,
+  int mergePoint = MERGE_AT_END
+) {
+    mergeSets(greaterSet, mergedSet.events, mergePoint);
 }
 
 template <typename T>
