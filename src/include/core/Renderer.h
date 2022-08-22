@@ -166,8 +166,10 @@ public:
                 // If this same key already has events registered in the combine map,
                 // Trigger them, and then register the new ones.
 
+
                 if (map3.find(commandKey) != map3.end()) {
                     std::vector<Model> extraEvents = map3[commandKey];
+
                     events.insert(events.end(), extraEvents.begin(), extraEvents.end());
                     // Should we rather append them to nextEvents ?
                 }
@@ -187,6 +189,7 @@ public:
             //std::cout << "end command" << std::endl;
 
             if (map3.find(commandKey) == map3.end() && !lastEventPulled)
+
                 return emptyEvents;
 
             std::vector<Model> events = map3[commandKey];
@@ -194,7 +197,9 @@ public:
                 events = orphanedEndings.front();
                 orphanedEndings.pop_front();
             }
+
             map3.erase(commandKey);
+
             return events;
         }
     }

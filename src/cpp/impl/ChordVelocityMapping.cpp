@@ -1,3 +1,4 @@
+#include <tuple>
 #include "../../include/impl/ChordVelocityMapping.h"
 
 namespace ChordVelocityMapping {
