@@ -11,11 +11,11 @@ class Strategy {
 public:
   virtual ~Strategy() {}
 
-  virtual void performVoiceStealing(
+  virtual void preventVoiceStealing(
     std::vector<noteData>& notes,
     commandData cmd
   ) = 0;
-  
+
   virtual void reset() = 0;
 };
 

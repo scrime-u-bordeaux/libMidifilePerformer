@@ -28,12 +28,12 @@ private:
     );
   }
 
-  void performVoiceStealing(
+  void preventVoiceStealing(
     std::vector<noteData>& notes,
     commandData cmd
   ) const {
     if (stealingStrategy.get() == nullptr) return;
-    stealingStrategy->performVoiceStealing(notes, cmd);
+    stealingStrategy->preventVoiceStealing(notes, cmd);
   }
 
   void adjustToCommandVelocity(
@@ -77,7 +77,7 @@ public:
   std::vector<noteData> combine3(commandData cmd,
                                  bool useCommandVelocity = true) {
     std::vector<noteData> res = renderer.combine3(cmd);
-    performVoiceStealing(res, cmd);
+    preventVoiceStealing(res, cmd);
     if (useCommandVelocity) adjustToCommandVelocity(res, cmd.velocity);
     return res;
   }
