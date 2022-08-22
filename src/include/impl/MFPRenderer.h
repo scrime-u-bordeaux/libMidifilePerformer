@@ -11,7 +11,7 @@ class MFPRenderer {
 private:
   std::shared_ptr<VoiceStealing::Strategy> stealingStrategy;
   std::shared_ptr<ChordVelocityMapping::Strategy> chordStrategy;
-  Renderer<noteData, commandData, commandKey> renderer;
+  Renderer<noteData, commandData, commandKey, noteKey> renderer;
 
   void setDefaultStrategies() {
     setVoiceStealingStrategy(
