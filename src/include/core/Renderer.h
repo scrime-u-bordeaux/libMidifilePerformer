@@ -6,7 +6,7 @@
 #include <map>
 #include "Chronology.h"
 
-template <typename Model, typename Command, typename CommandKey, typename ModelKey>
+template <typename Model, typename Command, typename CommandKey>
 class Renderer {
 
     // -------------------------------------------------------------------------
@@ -29,9 +29,6 @@ class Renderer {
 
     std::map<CommandKey, std::vector<Model>> map3; // A map between a start event
     // and its correspondent ending.
-    std::map<ModelKey, CommandKey> antiStealMap; // A map keeping track of which key
-    // is associated with each combination of pitch and channel,
-    // in order to prevent voice stealing.
 
     // -------------------------------------------------------------------------
 
@@ -104,34 +101,7 @@ public:
             //std::cout << "start command" << std::endl;
             std::vector<Model> events = modelEvents.pullEvents();
 
-            // For every event associated with this key press,
-            // See if it the same note and pitch have been assigned to another key press.
-            // If so, delete this note-pitch combination's release
-            // from the set of release events assigned to that other key's release.
-
-            for (Model& event : events) {
-                ModelKey modelKey = Events::keyFromData<Model, ModelKey>(event);
-
-                if (antiStealMap.find(modelKey) != antiStealMap.end()) {
-
-                    // This means this pitch-channel combination is associated
-                    // with another key.
-
-                    CommandKey assignedCommandKey = antiStealMap[modelKey];
-                    std::vector<Model>& endEvents = map3[assignedCommandKey];
-                    auto it = endEvents.begin();
-
-                    while (it != endEvents.end()){
-                        if (Events::correspond<Model>(*it, event))
-                            it = endEvents.erase(it); // prevent the other key from releasing the note
-                        else it++;
-                    }
-                }
-
-                antiStealMap[modelKey] = commandKey; // register the new key as this note's owner
-            }
-
-            // Then, if the event set that has been pulled is a starting set
+            // If the event set that has been pulled is a starting set
             // (Which should always be the case) :
 
             if (Events::hasStart<Model>(events)) {
