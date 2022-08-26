@@ -10,12 +10,20 @@ namespace Events {
 // Pseudo macros : macros and namespaces don't mix.
 // Still written in macro case for legibility reasons.
 
-const int MERGE_AT_BEGINNING=1;
-const int MERGE_AT_END=0;
+const int MERGE_AT_BEGINNING = 1;
+const int MERGE_AT_END = 0;
+
+// BASE TYPES FOR TIMESTAMPED SETS OF EVENTS ///////////////////////////////////
+
+// N.B. the definition of "event" is pretty free
+// it just needs to allow a meaningful specialization of the "various
+// operations on events and sets" methods below with its associated type.
+// This associated type should therefore contain some information indicating
+// whether its instances are start or end events.
 
 template <typename T>
 struct Set {
-  int64_t dt;
+  std::int64_t dt;
   std::vector<T> events;
 
   // Used for sorting IN THE CASE OF ABSOLUTE TICKS
@@ -25,6 +33,14 @@ struct Set {
       return dt < set.dt;
   }
 };
+
+template <typename T>
+struct SetPair {
+  Set<T> start;
+  Set<T> end;
+};
+
+// VARIOUS OPERATIONS ON EVENTS AND SETS ///////////////////////////////////////
 
 template <typename T>
 std::ostream& operator<<(std::ostream& os, struct Set<T> const &s){
