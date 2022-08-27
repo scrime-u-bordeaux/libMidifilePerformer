@@ -11,26 +11,34 @@
 template <typename Model, typename Command, typename CommandKey>
 class Renderer {
 private:
+  // keep track of started events to allow "all active note offs" generation
+  std::list<Model> startedEvents;
   std::map<CommandKey, Events::Set<Model>> pendingEndingSets;
 
-  virtual Events::SetPair<Model> getNextSetPair() = 0;
+public:
+  class Provider {
+  public:
+    /** Destructor. */
+    virtual ~Provider() = default;
+    /** Called by combine3. */
+    virtual Events::SetPair<Model> getNextSetPair() = 0;
+  };
 
-protected:
-  virtual Events::Set<Model> combine3(Command cmd) {
+  virtual Events::Set<Model> combine3(Command cmd, Provider* provider) {
     CommandKey key = Events::keyFromData<Command, CommandKey>(cmd);
     Events::Set<Model> emptySet = { 0, {} };
 
     if (Events::isStart<Command>(cmd)) {
-      auto pair = getNextSetPair();
+      auto pair = provider->getNextSetPair();
       Events::Set<Model> startingSet = pair.start;
       Events::Set<Model> endingSet = pair.end;
 
       // Manage multi-controller interaction :
       // if this same key already has events registered in the combine map,
       // trigger them before registering the new ones.
-
       if (pendingEndingSets.find(key) != pendingEndingSets.end()) {
-        // despite it being not optimal, we use MERGE_AT_BEGINNING in order to
+
+        // despite it being non optimal, we use MERGE_AT_BEGINNING in order to
         // keep all the end events first.
         // It is OK because this is not supposed to happen frequently.
         // todo : optimize if necessary
@@ -44,9 +52,10 @@ protected:
       pendingEndingSets[key] = endingSet;
       return startingSet;
     } else {
-      // This should never happen, except if we start rendering while
-      // some key is pressed then release this key during rendering, in which
-      // case we simply return an emptySet
+      // This should never happen thanks to multi-controller interaction
+      // management, except if we start rendering while some key is pressed,
+      // then release this key during rendering, in which case we simply return
+      // an emptySet and this will have no effect
       if (pendingEndingSets.find(key) == pendingEndingSets.end()) {
         return emptySet;
       }
@@ -84,8 +93,6 @@ protected:
 
 public:
   virtual ~Renderer() {}
-  
-  // virtual Events::Set<Model> render(Command cmd) = 0;
 };
 
 #endif /* MFP_RENDERER_H */
