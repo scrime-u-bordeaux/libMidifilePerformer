@@ -1,9 +1,14 @@
-#include "MFPRenderer.h"
+#include "SequencePerformer.h"
 
 const std::uint8_t defaultVelocity  = 127;
 const std::uint8_t defaultChannel   = 1;
 
-typedef std::pair<uint8_t, noteData> noteEvent;
+//typedef std::pair<uint32_t, noteData> noteEvent;
+
+struct noteEvent {
+  std::uint32_t dt;
+  noteData note;
+};
 
 inline noteData makeNote(
   bool on,
@@ -23,24 +28,24 @@ inline commandData makeCommand(
   return { pressed, id, velocity, channel };
 }
 
-inline void feedRenderer(
-  MFPRenderer& renderer,
+inline void feedPerformer(
+  SequencePerformer& performer,
   const std::vector<noteEvent>& events
 ) {
-  renderer.clear();
+  performer.clear();
   for (auto& event : events) {
-    renderer.pushEvent(event.first, event.second);
+    performer.pushEvent(event.dt, event.note);
   }
-  renderer.finalize();
+  performer.finalize();
 };
 
 inline std::vector<std::vector<noteData>> getPerformanceResults(
-  MFPRenderer& renderer,
+  SequencePerformer& performer,
   const std::vector<commandData>& commands
 ) {
   std::vector<std::vector<noteData>> res;
   for (auto& command : commands) {
-    res.push_back(renderer.combine3(command));
+    res.push_back(performer.render(command));
   }
   return res;
 };
