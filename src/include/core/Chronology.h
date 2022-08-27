@@ -24,7 +24,7 @@ namespace ChronologyParams{
     static parameters constexpr default_params = {
         .unmeet = true,
         .complete = false,
-        .temporalResolution = 0/
+        .temporalResolution = 0
     };
 
     static parameters constexpr no_unmeet = {
@@ -342,12 +342,11 @@ public:
     bufferPairState = { false, false };
   }
 
-  /*
-  // not required because we provide begin and end iterators :
+  // Required for cases where we want to use container specific methods
+
   Container<Events::SetPair<T>>& getContainer() {
     return container;
   }
-  //*/
 
   // Completely reset the chronology.
 
