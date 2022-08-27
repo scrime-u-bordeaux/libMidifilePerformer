@@ -1,7 +1,7 @@
 #include <tuple>
-#include "../../include/impl/ChordVelocityMapping.h"
+#include "../../include/impl/ChordRendering.h"
 
-namespace ChordVelocityMapping {
+namespace ChordRendering {
 
 // EXTENDED BASE STRATEGY CLASS ////////////////////////////////////////////////
 
@@ -48,7 +48,7 @@ class SameForAll :
 public ExtendedStrategy {
   virtual void
   adjustToCommandVelocity(std::vector<noteData>& notes,
-                          uint8_t cmd_velocity) {
+                          uint8_t cmd_velocity) override {
     for (auto& note : notes) {
       if (note.on && note.velocity != 0) {
         note.velocity = cmd_velocity;
@@ -61,7 +61,7 @@ class ClippedScaledFromMean :
 public ExtendedStrategy {
   virtual void
   adjustToCommandVelocity(std::vector<noteData>& notes,
-                          uint8_t cmd_velocity) {
+                          uint8_t cmd_velocity) override {
     float mean = computeMeanVelocity(notes);
     if (mean == 0.f) return;
 
@@ -84,7 +84,7 @@ class AdjustedScaledFromMean :
 public ExtendedStrategy {
   virtual void
   adjustToCommandVelocity(std::vector<noteData>& notes,
-                          uint8_t cmd_velocity) {
+                          uint8_t cmd_velocity) override {
     float mean;
     uint8_t min, max;
     std::tie(mean, min, max) = computeVelocityStats(notes);
@@ -114,9 +114,9 @@ class ClippedScaledFromMax :
 public ExtendedStrategy {
   virtual void
   adjustToCommandVelocity(std::vector<noteData>& notes,
-                          uint8_t cmd_velocity) {
+                          uint8_t cmd_velocity) override {
     uint8_t max = 0;
-    for (auto& note: notes) {
+    for (auto& note : notes) {
       if (note.velocity > max) max = note.velocity;
     }
     if (max == 0) return;
@@ -124,7 +124,7 @@ public ExtendedStrategy {
     const int maxVelocity = 127, minVelocity = 1;
     float maxRatio = static_cast<float>(cmd_velocity) / max;
 
-    for (auto& note: notes) {
+    for (auto& note : notes) {
       float ratio = static_cast<float>(note.velocity) / max;
       int adjustedVelocity = note.velocity * maxRatio;
       note.velocity = uint8_t(
@@ -158,4 +158,4 @@ std::shared_ptr<Strategy> createStrategy(StrategyType s) {
   return std::shared_ptr<Strategy>(strategy);
 }
 
-} /* END NAMESPACE ChordVelocityMapping */
+} /* END NAMESPACE ChordRendering */

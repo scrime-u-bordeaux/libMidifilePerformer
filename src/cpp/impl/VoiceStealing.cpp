@@ -5,12 +5,6 @@ namespace VoiceStealing {
 
 // STRATEGY IMPLEMENTATIONS ////////////////////////////////////////////////////
 
-class None : public Strategy {
-public:
-  void performVoiceStealing(std::vector<noteData>& notes, commandData cmd) {}
-  void reset() {}
-};
-
 class LastNoteOffWins : public Strategy {
 private:
   std::map<noteKey, std::uint8_t> sameNotePolyphony;
@@ -75,9 +69,6 @@ public:
 std::shared_ptr<Strategy> createStrategy(StrategyType s) {
   Strategy* strategy;
   switch (s) {
-    case StrategyType::None:
-      strategy = new None();
-      break;
     case StrategyType::LastNoteOffWins:
       strategy = new LastNoteOffWins();
       break;

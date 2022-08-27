@@ -7,7 +7,9 @@
 #include <vector>
 #include "../core/Events.h"
 
-static std::string noteNames[12] = {"A","A#","B","C","C#","D","D#","E","F","F#","G","G#"};
+static std::string noteNames[12] = {
+  "A","A#","B","C","C#","D","D#","E","F","F#","G","G#"
+};
 
 inline std::string convertIdToNoteName(uint8_t id){
     if(id < 21 || id > 108) return "??";
