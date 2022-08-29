@@ -35,12 +35,12 @@ public Renderer<noteData, commandData, commandKey>::Provider {
 protected:
   Renderer<noteData, commandData, commandKey> renderer;
 
-  virtual void performVoiceStealing(
+  virtual void preventVoiceStealing(
     std::vector<noteData>& notes,
     commandData cmd
   ) const {
     if (stealingStrategy.get() == nullptr) return;
-    stealingStrategy->performVoiceStealing(notes, cmd);
+    stealingStrategy->preventVoiceStealing(notes, cmd);
   }
 
   virtual void adjustToCommandVelocity(

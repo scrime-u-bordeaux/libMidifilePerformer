@@ -20,7 +20,7 @@ if(BUILD_TESTING)
     add_executable(
         AllTests
         scoresAndCommands.test.cpp
-        chordVelocityMapping.test.cpp
+        chordRendering.test.cpp
         voiceStealing.test.cpp
         invalidMapEntries.test.cpp
         midiFiles.test.cpp

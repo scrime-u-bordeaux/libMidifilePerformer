@@ -55,7 +55,7 @@ SCENARIO("mapping the relative note velocities of a chord") {
 
   GIVEN("the SameForAll strategy") {
     performer.setChordRenderingStrategy(
-      ChordVelocityMapping::StrategyType::SameForAll
+      ChordRendering::StrategyType::SameForAll
     );
 
     WHEN("we play a chord containing random velocities") {
@@ -89,7 +89,7 @@ SCENARIO("mapping the relative note velocities of a chord") {
 
   GIVEN("the ClippedScaledFromMean strategy") {
     performer.setChordRenderingStrategy(
-      ChordVelocityMapping::StrategyType::ClippedScaledFromMean
+      ChordRendering::StrategyType::ClippedScaledFromMean
     );
 
     WHEN("we play a chord including notes with velocities 1 and 127") {
@@ -117,14 +117,14 @@ SCENARIO("mapping the relative note velocities of a chord") {
 
   GIVEN("using the AdjustedScaledFromMean strategy") {
     performer.setChordRenderingStrategy(
-      ChordVelocityMapping::StrategyType::AdjustedScaledFromMean
+      ChordRendering::StrategyType::AdjustedScaledFromMean
     );
     // TODO
   }
   
   GIVEN("using the ClippedScaledFromMax strategy") {
     performer.setChordRenderingStrategy(
-      ChordVelocityMapping::StrategyType::ClippedScaledFromMax
+      ChordRendering::StrategyType::ClippedScaledFromMax
     );
     WHEN("we play a chord including note velocities 1 to 127") {
       auto chord = makeChord({ 1, 64, 127 });

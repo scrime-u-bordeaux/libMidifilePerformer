@@ -110,7 +110,7 @@ public:
     if (!finalized) return {};
 
     std::vector<noteData> res = renderer.combine3(cmd, this).events;
-    performVoiceStealing(res, cmd);
+    preventVoiceStealing(res, cmd);
     if (useCommandVelocity) adjustToCommandVelocity(res, cmd.velocity);
     return res;
   }

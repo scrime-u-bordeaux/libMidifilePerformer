@@ -111,7 +111,7 @@ public:
 
   std::vector<noteData> render(commandData cmd) {
     std::vector<noteData> res = renderer.combine3(cmd, this).events;
-    performVoiceStealing(res, cmd);
+    preventVoiceStealing(res, cmd);
     adjustToCommandVelocity(res, cmd.velocity);
     return res.events;
   }
