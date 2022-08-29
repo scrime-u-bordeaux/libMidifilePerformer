@@ -12,7 +12,7 @@ template <typename Model, typename Command, typename CommandKey>
 class Renderer {
 private:
   // keep track of started events to allow "all active note offs" generation
-  std::list<Model> startedEvents;
+  // std::list<Model> startedEvents;
   std::map<CommandKey, Events::Set<Model>> pendingEndingSets;
 
 public:

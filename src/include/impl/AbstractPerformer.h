@@ -35,7 +35,7 @@ public Renderer<noteData, commandData, commandKey>::Provider {
 protected:
   Renderer<noteData, commandData, commandKey> renderer;
 
-  void performVoiceStealing(
+  virtual void performVoiceStealing(
     std::vector<noteData>& notes,
     commandData cmd
   ) const {
@@ -43,7 +43,7 @@ protected:
     stealingStrategy->performVoiceStealing(notes, cmd);
   }
 
-  void adjustToCommandVelocity(
+  virtual void adjustToCommandVelocity(
     std::vector<noteData>& notes,
     uint8_t cmd_velocity
   ) const {

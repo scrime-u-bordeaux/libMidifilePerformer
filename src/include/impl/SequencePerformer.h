@@ -14,7 +14,7 @@ private:
   std::size_t minIndex, maxIndex, currentIndex;
 
   // keep track of started events to allow "all active note offs" generation
-  std::list<Model> startedEvents;
+  // std::list<noteData> startedEvents;
 
   virtual Events::SetPair<noteData> getNextSetPair() override {
     Events::SetPair<noteData> res;
