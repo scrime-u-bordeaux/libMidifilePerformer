@@ -3,59 +3,72 @@
 
 namespace VoiceStealing {
 
+// THROUGHOUT THIS FILE, "note" means "combination of pitch and channel".
+
 // STRATEGY IMPLEMENTATIONS ////////////////////////////////////////////////////
 
 class LastNoteOffWins : public Strategy {
 private:
-  std::map<noteKey, std::uint8_t> sameNotePolyphony;
+
+  std::map<noteKey, std::uint8_t> triggerCountMap;
 
 public:
-  void performVoiceStealing(std::vector<noteData>& notes, commandData cmd) {
-    // std::cout < "performing voice stealing" << std::endl;
-    for (auto i = 0; i < notes.size(); ++i) {
-      const std::vector<noteData>::iterator it = notes.begin() + i;
-      noteData nData = notes[i];
+  void preventVoiceStealing(std::vector<noteData>& notes, commandData cmd) {
+    // std::cout < "preventing voice stealing" << std::endl;
+
+    std::vector<noteData> addedNoteOffs;
+
+    auto it = notes.begin();
+
+    while(it!=notes.end()) {
+      auto nData = *it;
       noteKey key = Events::keyFromData<noteData, noteKey>(nData);
 
-      if (sameNotePolyphony.find(key) == sameNotePolyphony.end()) {
+      if (triggerCountMap.find(key) == triggerCountMap.end()) { // note was not found
         if (nData.on) {
-          sameNotePolyphony[key] = 1;
+          triggerCountMap[key] = 1; // register the first trigger of this note
         } else {
-          // do nothing or remove the note off event ?
+          // do nothing ?
+          // isn't this an error case ?
+          // this means : a note off is in the vector,
+          // but the corresponding note on HAS NOT been registered ?!
         }
-      } else {
-        if (nData.on) {
-          // insert a note off before
-          notes.insert(it, { false, nData.pitch, 0, nData.channel });
-          // avoid processing the same note on event again
-          i++;
+        it++;
+    } else { // note has already been triggered at least once
+        if (nData.on) { // note is being triggered again
+          // insert a note off before it
+          addedNoteOffs.push_back({ false, nData.pitch, 0, nData.channel });
           // keep track of simultaneous note ons
-          sameNotePolyphony[key]++;
-        } else if (sameNotePolyphony[key] > 1) {
-          // discard the note off event
+          triggerCountMap[key]++;
+          it++;
+        } else if (triggerCountMap[key] > 1) {
           notes.erase(it);
-          // avoid missing next noteData struct from the loop
-          i--;
           // keep track of simultaneous note ons
-          sameNotePolyphony[key]--;
+          triggerCountMap[key]--;
         } else {
           // don't touch anything and remove the entry from the map
-          sameNotePolyphony.erase(key);
+          triggerCountMap.erase(key);
+          it++;
         }
       }
     }
+
+    addedNoteOffs.insert(addedNoteOffs.end(),notes.begin(),notes.end());
+    notes = addedNoteOffs;
   }
 
   void reset() {
-    sameNotePolyphony.clear();
+    triggerCountMap.clear();
   }
 };
+
+// ???
 
 class OnlyStaccato : public Strategy {
 private:
 
 public:
-  void performVoiceStealing(std::vector<noteData>& notes, commandData cmd) {
+  void preventVoiceStealing(std::vector<noteData>& notes, commandData cmd) {
     // todo
   }
 

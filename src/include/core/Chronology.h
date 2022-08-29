@@ -116,16 +116,12 @@ private:
   // Inserts the corresponding endings directly into the empty set that follows them.
 
   void checkForEventCompletion() {
-    if (!incompleteEvents.empty()) {
-      auto it = incompleteEvents.begin();
-      bool constructResult = false;
-      while (it != incompleteEvents.end()) {
-        constructResult
-          = constructInsertSet(inputSet,it->set,*(it->followingEmptySet));
-        if (constructResult) it = incompleteEvents.erase(it);
-        else it++;
-      }
-    }
+
+    auto predicate = [this](incompleteEventSet& s) {
+        return constructInsertSet(inputSet,s.set,*(s.followingEmptySet));
+    };
+
+    if (!incompleteEvents.empty()) std::erase_if(incompleteEvents, predicate);
   }
 
   // The set of steps followed when modifying or pushing bufferSet and inputSet.
