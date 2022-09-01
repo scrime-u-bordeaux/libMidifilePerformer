@@ -60,7 +60,7 @@ public:
     finalized = false;
     score.clear();
     setLoopPoints(0, 0);
-    setIndex(0);
+    setCurrentIndex(0);
   }
 
   void pushEvent(std::uint32_t dt, const noteData& data) {
@@ -71,7 +71,7 @@ public:
   void finalize() {
     score.finalize();
     setLoopPoints(0, score.size() - 1);
-    setIndex(0);
+    setCurrentIndex(0);
     finalized = true;
   }
 
@@ -97,9 +97,18 @@ public:
     maxIndex = std::min(std::max(mini, maxi), size() - 1);
   }
 
-  std::size_t setIndex(std::size_t index) {
+  std::size_t setCurrentIndex(std::size_t index) {
+    resetVoiceStealing();
     currentIndex = std::min(maxIndex, std::max(minIndex, index));
     return currentIndex;
+  }
+
+  std::size_t getCurrentIndex() {
+    return currentIndex;
+  }
+
+  Events::SetPair<noteData> getCurrentSetPair() {
+    return *(score.begin() + currentIndex);
   }
 
   std::vector<noteData> render(commandData cmd) {

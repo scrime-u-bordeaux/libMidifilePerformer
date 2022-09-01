@@ -43,6 +43,11 @@ protected:
     stealingStrategy->preventVoiceStealing(notes, cmd);
   }
 
+  virtual void resetVoiceStealing() {
+    if (stealingStrategy.get() == nullptr) return;
+    stealingStrategy->reset();
+  }
+
   virtual void adjustToCommandVelocity(
     std::vector<noteData>& notes,
     uint8_t cmd_velocity

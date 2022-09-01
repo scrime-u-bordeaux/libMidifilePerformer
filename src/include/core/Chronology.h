@@ -64,6 +64,8 @@ private:
   // ----------------------------PRIVATE FIELDS---------------------------------
   // ---------------------------------------------------------------------------
 
+  std::int64_t dtAccum;
+
   ChronologyParams::parameters params;
 
   Events::Set<T> inputSet; // Set containing the most recent input
@@ -267,11 +269,11 @@ public:
 
   Chronology() :
   params(ChronologyParams::default_params),
-  bufferPairState(false, false) {}
+  bufferPairState(false, false), dtAccum(0) {}
 
   Chronology(ChronologyParams::parameters initParams) :
   params(initParams),
-  bufferPairState(false, false) {}
+  bufferPairState(false, false), dtAccum(0) {}
 
   ~Chronology() {}
 
@@ -305,14 +307,16 @@ public:
     if (params.complete) checkForEventCompletion();
 
     // Event begins at a different time ; inputSet and bufferSet will change
-    if (dt > params.temporalResolution) {
+    if ((dt + dtAccum) > params.temporalResolution) {
       genericPushLogic(false);
 
       // The inputSet is now the most recent input.
-      inputSet = { dt, { data } };
+      inputSet = { dt + dtAccum, { data } };
+      dtAccum = 0;
     } else { // this is a synchronized event ; just append to the input.
       inputSet.events.push_back(data);
-      inputSet.dt += dt;
+      // inputSet.dt += dt;
+      dtAccum += dt;
       // or use dtAccum var to keep track of "drift" due to temporalResolution 
       // and separate far enough events?
     }
@@ -333,6 +337,7 @@ public:
     shiftSameEventEndings();
 
     // Reset the inner sets.
+    dtAccum = 0;
     inputSet = { 0, {} };
     bufferSet = { 0, {} };
     bufferPairState = { false, false };
@@ -347,6 +352,7 @@ public:
   // Completely reset the chronology.
 
   void clear() {
+    dtAccum = 0;
     inputSet = { 0, {} };
     bufferSet = { 0, {} };
     bufferPairState = { false, false };
