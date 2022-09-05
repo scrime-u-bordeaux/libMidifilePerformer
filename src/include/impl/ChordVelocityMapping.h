@@ -1,9 +1,9 @@
-#ifndef MFP_VOICESTEALING_H
-#define MFP_VOICESTEALING_H
+#ifndef MFP_CHORDVELOCITYMAPPING_H
+#define MFP_CHORDVELOCITYMAPPING_H
 
 #include "NoteAndCommandEvents.h"
 
-namespace VoiceStealing {
+namespace ChordVelocityMapping {
 
 // BASE STRATEGY CLASS /////////////////////////////////////////////////////////
 
@@ -11,20 +11,20 @@ class Strategy {
 public:
   virtual ~Strategy() {}
 
-  virtual void preventVoiceStealing(
+  virtual void adjustToCommandVelocity(
     std::vector<noteData>& notes,
-    commandData cmd
+    uint8_t cmd_velocity
   ) = 0;
-
-  virtual void reset() = 0;
 };
 
 // LIST OF STRATEGY IMPLEMENTATIONS ////////////////////////////////////////////
 
 enum class StrategyType {
   None,
-  LastNoteOffWins,
-  OnlyStaccato
+  SameForAll,
+  ClippedScaledFromMean,
+  AdjustedScaledFromMean,
+  ClippedScaledFromMax
 };
 
 // STRATEGY FACTORY FUNCTION ///////////////////////////////////////////////////
@@ -32,6 +32,6 @@ enum class StrategyType {
 // will return a nullptr is strategy type is none
 std::shared_ptr<Strategy> createStrategy(StrategyType s);
 
-} /* END NAMESPACE VoiceStealing */
+} /* END NAMESPACE ChordVelocityMapping */
 
-#endif /* MFP_VOICESTEALING_H */
+#endif /* MFP_CHORDVELOCITYMAPPING_H */

@@ -1,8 +1,7 @@
 set(CMAKE_STATIC_LIBRARY_PREFIX "")
 
 add_library(libMidifilePerformer
-  cpp/impl/ChordRendering.cpp
-  cpp/impl/VoiceStealing.cpp
+  cpp/impl/ChordVelocityMapping.cpp
 )
 
 set_target_properties(libMidifilePerformer

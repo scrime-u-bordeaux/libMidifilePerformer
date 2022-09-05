@@ -1,7 +1,7 @@
 #include <tuple>
-#include "../../include/impl/ChordRendering.h"
+#include "../../include/impl/ChordVelocityMapping.h"
 
-namespace ChordRendering {
+namespace ChordVelocityMapping {
 
 // EXTENDED BASE STRATEGY CLASS ////////////////////////////////////////////////
 
@@ -158,4 +158,4 @@ std::shared_ptr<Strategy> createStrategy(StrategyType s) {
   return std::shared_ptr<Strategy>(strategy);
 }
 
-} /* END NAMESPACE ChordRendering */
+} /* END NAMESPACE ChordVelocityMapping */
