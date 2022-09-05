@@ -2,6 +2,7 @@
 #define MFP_GENERICPERFORMER_H
 
 #include "NoteAndCommandEvents.h"
+#include "AntiVoiceStealing.h"
 #include "AbstractPerformer.h"
 #include "../core/Chronology.h"
 
@@ -9,14 +10,14 @@
 // GENERIC RENDERER CLASS TEMPLATE IMPLEMENTATION //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-// to be finalized :
-
 // attempt at writing a general purpose API with balanced benefits from using
 // std::list or std::vector as container types
+// to be finalized
 
 // NB : this API is not clean and mostly experimental
 // it could be used wrongly if pull AND iterate approaches are mixed
 
+// todo : add an anti voice stealing instance as in SequencePerformer
 
 template <
   template <
