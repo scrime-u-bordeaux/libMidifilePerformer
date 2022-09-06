@@ -24,6 +24,10 @@ public:
     virtual Events::SetPair<Model> getNextSetPair() = 0;
   };
 
+  virtual void clear() {
+    pendingEndingSets.clear();
+  }
+
   virtual Events::Set<Model> combine3(Command cmd, Provider* provider) {
     CommandKey key = Events::keyFromData<Command, CommandKey>(cmd);
     Events::Set<Model> emptySet = { 0, {} };
