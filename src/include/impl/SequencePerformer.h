@@ -1,17 +1,34 @@
-#ifndef MFP_SEQUENCERENDERER_H
-#define MFP_SEQUENCERENDERER_H
+#ifndef MFP_SEQUENCEPERFORMER_H
+#define MFP_SEQUENCEPERFORMER_H
 
 #include "NoteAndCommandEvents.h"
 #include "AntiVoiceStealing.h"
 #include "AbstractPerformer.h"
 #include "../core/Chronology.h"
 
+/*
+ * Note : we could make this class a template, only strategies really need to
+ * use concrete types (noteData and commandData) to make sense out of them, like
+ * the chordVelocityMapping strategy.
+ * The strategy mechanism itself could also be a template, but in this case the
+ * specializations would use types representing MIDI note events for the Model
+ * abstract type : this would allow the SequencePerformer (or other performers)
+ * to adapt to different formalisms of a MIDI message, depending on the MIDI
+ * library we want to interface with (the Command abstract type would probably
+ * use the same MIDI note event type as Model). All we would need to do then is
+ * create a file similar to NoteAndCommandEvents.h with specializations of the
+ * required functions for the 3rd-party library defined types, and instantiate a
+ * Performer specialized with these types.
+ */
+
 class SequencePerformer : public AbstractPerformer {
 public:
+  // Stopping state : when not looping and reaching the end we want to let the
+  // last command ring, so we enter this state in which 
   enum State {
     Armed,
     Playing,
-    Stopping, // when not looping and reaching the end we want to let the last command ring
+    Stopping,
     Stopped
   };
 
@@ -19,7 +36,7 @@ private:
   State currentState;
 
   // a callback for note event listeners, it will be called on any call to
-  // render()
+  // render, setCurrentIndex and stop
   std::function<void(std::vector<noteData>)> noteEventsCallback;
 
   // anti voice stealing system that works by tracking the number of active
@@ -43,13 +60,14 @@ private:
   bool looping; // true if loop is enabled
   std::size_t minIndex, maxIndex, currentIndex; // loop indices + current index
 
-  // internal utilities
+  // internal utilities ////////////////////////////////////////////////////////
 
   virtual void executeNoteEventsCallback(std::vector<noteData>& notes) {
     noteEventsCallback(notes);
   }
 
-  virtual std::size_t getNextIndex() {
+  // used by getNextSetPair and peekNextSetPair
+  virtual std::size_t getNextIndex() const {
     if (currentState == State::Armed) return currentIndex;
     if (currentIndex < maxIndex) return currentIndex + 1;
     if (!looping) return score.size();
@@ -82,9 +100,10 @@ private:
     }
   }
 
-  void mergeAvsStates(std::map<noteKey, std::uint8_t>& target,
-                      const std::map<noteKey, std::uint8_t> source)
-  {
+  void mergeAvsStates(
+    std::map<noteKey, std::uint8_t>& target,
+    const std::map<noteKey, std::uint8_t> source
+  ) const {
     for (auto it = source.begin(); it != source.end(); ++it) {
       if (target.find(it->first) != target.end()) {
         target[it->first] += it->second;
@@ -94,22 +113,42 @@ private:
     }
   }
 
-  //////////////////////////////////////////////////////////////////////////////
-  // IMPLEMENTATION OF THE PURE VIRTUAL METHOD DEFINED IN Renderer::Provider ///
-  //////////////////////////////////////////////////////////////////////////////
+  void updateIndexFromLoopIndices() {
+    if (currentIndex < minIndex) {
+      setCurrentIndex(minIndex);
+    } else if (currentIndex > maxIndex) {
+      setCurrentIndex(maxIndex);
+      currentState = State::Stopped;
+    } else {
+      setCurrentIndex(currentIndex);
+    }
+  }
 
-  // this method is called by the render method exclusively, through combine3
-
+  /**
+   * Implementation of the pure virtual method getNextSetPair defined in
+   * Renderer::Provider that we inherit from AbstractPerformer, and which is
+   * called from render when we execute `renderer.combine3(cmd, this)`
+   *
+   * This method is responsible for maintaining the index of the SetPair it
+   * returns by itself, most of the time by incrementing it, but jumps must be
+   * handled carefully because they often leave dangling notes (which can be
+   * taken care of using the AntiVoiceStealing class and the avsHistory)
+   *
+   * This means we can access the next event sets only by rendering them.
+   * To preview the next event set pair, the peekNextSetPair method is provided
+   * which helps for playback situations (we want to know how long to wait
+   * before playing an event set, without having to play it first to get this
+   * information).
+   */
   virtual Events::SetPair<noteData> getNextSetPair() override { // <=> pull
     currentIndex = getNextIndex();
     auto res = getCurrentSetPair();
     
+    // this will be executed as long as currentState != State::Stopped
     if (currentIndex == score.size()) {
       currentState = State::Stopping;
-      // if we are stopping (because we reached the end index), we only let the
-      // release commands through and return 
       currentIndex = maxIndex;
-      return res;
+      return res; // will be empty if currentIndex == score.size()
     }
 
     // set to Playing after call to getNextIndex which checks currentState value
@@ -147,17 +186,6 @@ private:
     return res;
   }
 
-  void updateIndexFromLoopIndices() {
-    if (currentIndex < minIndex) {
-      setCurrentIndex(minIndex);
-    } else if (currentIndex > maxIndex) {
-      setCurrentIndex(maxIndex);
-      currentState = State::Stopped;
-    } else {
-      setCurrentIndex(currentIndex);
-    }
-  }
-
 public:
   SequencePerformer() :
   AbstractPerformer(), score(Chronology<noteData, std::vector>()),
@@ -171,11 +199,13 @@ public:
   looping(false), currentState(State::Stopped),
   noteEventsCallback([](std::vector<noteData>){}) {}
 
-  virtual void setNoteEventsCallback(std::function<void(std::vector<noteData>)> cb) {
+  virtual void setNoteEventsCallback(
+    std::function<void(std::vector<noteData>)> cb
+  ) {
     noteEventsCallback = cb;
   }
 
-  virtual std::size_t size() {
+  virtual std::size_t size() const {
     return score.finalized() ? score.size() : 0;
   }
 
@@ -228,7 +258,7 @@ public:
   // stop immediately
   // be careful when calling this method : you should either have a note event
   // listener attached or call getAllNoteOffs before to stop pending notes
-    virtual void stop() {
+  virtual void stop() {
     currentState = State::Stopped;
     std::vector<noteData> allNoteOffs = avs.getAllNoteOffs();
     executeNoteEventsCallback(allNoteOffs);
@@ -241,8 +271,8 @@ public:
   }
 
   // this method calls stop, then updates currentIndex and sets state to Armed
-  // as for stop, make sure not to leave pending notes by calling getAllNoteOffs
-  // before to stop them
+  // as for stop, make sure to call getAllNoteOffs before to stop pending notes
+  // if you don't have a note event listener
   virtual std::size_t setCurrentIndex(std::size_t index) {
     stop();
     currentIndex = std::min(maxIndex, std::max(minIndex, index));
@@ -254,52 +284,29 @@ public:
     return currentIndex;
   }
 
-  virtual Events::SetPair<noteData> peekNextSetPair() { // <=> peek
-    return getSetPairAtIndex(getNextIndex());
-  }
-
   std::vector<noteData> getAllNoteOffs() {
-    // std::vector<noteData> allNoteOffs = avs.getAllNoteOffs();
-    // executeNoteEventsCallback(allNoteOffs);
-    // return allNoteOffs;
     return avs.getAllNoteOffs();
   }
 
-  virtual std::vector<noteData> render(commandData cmd) { // <=> step
-    return render(cmd, true);
+  virtual Events::SetPair<noteData> peekNextSetPair() { // <=> "peek"
+    return getSetPairAtIndex(getNextIndex());
   }
 
-  virtual std::vector<noteData> render(commandData cmd, bool useCommandVelocity) {
-    if (!score.finalized() || currentState == State::Stopped) {
-      return {};
-    }
-    /*
-    if (currentState == State::Stopping) {
-      std::cout << "stopping ..................................." << std::endl;
-      std::cout << "avs size " << avs.getTriggerCountMap().size() << std::endl;
-      std::cout << "current index " << currentIndex << std::endl;
-    }
-    //*/
+  /**
+   * the only way to move forward in the chronology is to call this method !!!
+   */
+  virtual std::vector<noteData> render(commandData cmd) { // <=> "pull"
+    if (!score.finalized() || currentState == State::Stopped) return {};
+
     std::vector<noteData> res = renderer.combine3(cmd, this).events;
     avs.preventVoiceStealing(res);
-    /*
-    auto state = avs.getTriggerCountMap();
-    std::cout << "trigger count map :" << std::endl;
-    for (auto it = state.begin(); it != state.end(); ++it) {
-      std::cout << static_cast<int>(it->first.pitch) << " ";
-      std::cout << static_cast<int>(it->first.channel) << " ";
-      std::cout << static_cast<int>(it->second) << std::endl;
-    }
-    //*/
-    if (useCommandVelocity) {
-      adjustToCommandVelocity(res, cmd.velocity);
-    }
-    executeNoteEventsCallback(res);
+
     if (currentState == State::Stopping && avs.getTriggerCountMap().empty()) {
-      // we let all the endings commands through
-      // std::cout << "just stopped !" << std::endl;
       currentState = State::Stopped;
     }
+
+    adjustToCommandVelocity(res, cmd.velocity);
+    executeNoteEventsCallback(res);
     return res;
   }
 
@@ -309,10 +316,11 @@ public:
 
   virtual void setChronology(const Chronology<noteData, std::vector>& newScore) {
     score = newScore;
+
     if (score.finalized()) {
       setLoopIndices(0, score.size() - 1);
     }
   }
 };
 
-#endif /* MFP_SEQUENCERENDERER_H */
+#endif /* MFP_SEQUENCEPERFORMER_H */

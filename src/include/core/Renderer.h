@@ -11,8 +11,6 @@
 template <typename Model, typename Command, typename CommandKey>
 class Renderer {
 private:
-  // keep track of started events to allow "all active note offs" generation
-  // std::list<Model> startedEvents;
   std::map<CommandKey, Events::Set<Model>> pendingEndingSets;
 
 public:
@@ -69,31 +67,6 @@ public:
       return endingSet;
     }
   }
-
-  // is this really useful (not used anywhere ATM) ?
-  // if we just return all pending endings set we miss all the
-  // "not immediately following" endings
-
-  // keeping track of all active notes to be able to generate
-  // all their corresponding endings at any moment would be more appropriate as
-  // it would allow to optimally handle an "all notes off" event.
-  // plus, this could be performed without any knowledge of pendingEndingSets,
-  // like the voice stealing stuff
-
-  // virtual Events::Set<Model> getAllPendingEndingEvents() {
-  //   Events::Set<Model> res = { 0, {} };
-
-  //   for (auto& set : pendingEndingSets) {
-  //     const auto& extraEvents = set.second.events;
-  //     res.events.insert(
-  //       res.events.end(),
-  //       extraEvents.begin(),
-  //       extraEvents.end()
-  //     );
-  //   }
-
-  //   return res;
-  // }
 
 public:
   virtual ~Renderer() {}

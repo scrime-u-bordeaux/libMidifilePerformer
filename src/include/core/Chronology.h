@@ -116,8 +116,9 @@ private:
     return !insertSet.events.empty();
   }
 
-  // Checks whether incomplete events can be completed using the current inputSet.
-  // Inserts the corresponding endings directly into the empty set that follows them.
+  // Checks whether incomplete events can be completed using the current
+  // inputSet. Inserts the corresponding endings directly into the empty set
+  // that follows them.
 
   void checkForEventCompletion() {
 
@@ -293,9 +294,9 @@ public:
     return container.end();
   }
 
-  std::size_t size() { return container.size(); }
+  std::size_t size() const { return container.size(); }
 
-  bool finalized() { return finalizedFlag; }
+  bool finalized() const { return finalizedFlag; }
 
   // Called when a new event is added to the chronology.
 

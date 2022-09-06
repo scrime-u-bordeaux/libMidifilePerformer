@@ -2,12 +2,10 @@
 #define MFP_ABSTRACTPERFORMER_H
 
 #include "NoteAndCommandEvents.h"
-// #include "VoiceStealing.h"
-// #include "AntiVoiceStealing.h"
 #include "ChordVelocityMapping.h"
 #include "../core/Renderer.h"
 
-// This class just defines strategy related functionalities and a renderer
+// This class just defines strategy related functionalities and adds a renderer
 // variable. It is abstract because it doesn't implement the getNextSetPair()
 // pure virtual method of the abstract Renderer<T,U,V>::Provider,
 // as it has no Chronology variable to get SetPairs from.
@@ -18,8 +16,8 @@ public Renderer<noteData, commandData, commandKey>::Provider {
 
   void setDefaultStrategies() {
     setChordVelocityMappingStrategy(
-      // ChordVelocityMapping::StrategyType::None
-      ChordVelocityMapping::StrategyType::SameForAll
+      ChordVelocityMapping::StrategyType::None
+      // ChordVelocityMapping::StrategyType::SameForAll
       // ChordVelocityMapping::StrategyType::ClippedScaledFromMean
       // ChordVelocityMapping::StrategyType::AdjustedScaledFromMean
       // ChordVelocityMapping::StrategyType::ClippedScaledFromMax
@@ -48,7 +46,9 @@ public:
   // must be implemented by Renderer<T,U,V>::Provider
   virtual Events::SetPair<noteData> getNextSetPair() = 0;
 
-  virtual void setChordVelocityMappingStrategy(ChordVelocityMapping::StrategyType s) {
+  virtual void setChordVelocityMappingStrategy(
+    ChordVelocityMapping::StrategyType s
+  ) {
     chordStrategy = ChordVelocityMapping::createStrategy(s);
   }
 };

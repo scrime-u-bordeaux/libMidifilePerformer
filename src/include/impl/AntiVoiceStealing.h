@@ -1,16 +1,22 @@
 #ifndef MFP_ANTIVOICESTEALING_H
 #define MFP_ANTIVOICESTEALING_H
 
+
+#include <map>
+#include "NoteAndCommandEvents.h"
+
+// Note : this could be made into a template if we had a template function that
+// could generate a generic end event from a start event, e.g :
+// Events::genericEndFromStart<noteData>(startData)"
+// we already have Events::isStart<noteData>
+
 class AntiVoiceStealing {
 private:
   std::map<noteKey, std::uint8_t> triggerCountMap;
 
 public:
   void preventVoiceStealing(std::vector<noteData>& notes) {
-    // std::cout < "preventing voice stealing" << std::endl;
-
     std::vector<noteData> addedNoteOffs;
-
     auto it = notes.begin();
 
     while (it != notes.end()) {
@@ -27,7 +33,7 @@ public:
           // but the corresponding note on HAS NOT been registered ?!
         }
         it++;
-    } else { // note has already been triggered at least once
+      } else { // note has already been triggered at least once
         if (nData.on) { // note is being triggered again
           // insert a note off before it
           addedNoteOffs.push_back({ false, nData.pitch, 0, nData.channel });
@@ -46,7 +52,7 @@ public:
       }
     }
 
-    addedNoteOffs.insert(addedNoteOffs.end(),notes.begin(),notes.end());
+    addedNoteOffs.insert(addedNoteOffs.end(), notes.begin(), notes.end());
     notes = addedNoteOffs;
   }
 
