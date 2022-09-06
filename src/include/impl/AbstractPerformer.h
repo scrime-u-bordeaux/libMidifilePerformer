@@ -2,8 +2,9 @@
 #define MFP_ABSTRACTPERFORMER_H
 
 #include "NoteAndCommandEvents.h"
-#include "VoiceStealing.h"
-#include "ChordRendering.h"
+// #include "VoiceStealing.h"
+// #include "AntiVoiceStealing.h"
+#include "ChordVelocityMapping.h"
 #include "../core/Renderer.h"
 
 // This class just defines strategy related functionalities and a renderer
@@ -13,40 +14,20 @@
 
 class AbstractPerformer :
 public Renderer<noteData, commandData, commandKey>::Provider {
-  std::shared_ptr<VoiceStealing::Strategy> stealingStrategy;
-  std::shared_ptr<ChordRendering::Strategy> chordStrategy;
+  std::shared_ptr<ChordVelocityMapping::Strategy> chordStrategy;
 
   void setDefaultStrategies() {
-    setVoiceStealingStrategy(
-      // VoiceStealing::StrategyType::None
-      VoiceStealing::StrategyType::LastNoteOffWins
-      // VoiceStealing::StrategyType::OnlyStaccato
-    );
-
-    setChordRenderingStrategy(
-      // ChordRendering::StrategyType::None
-      ChordRendering::StrategyType::SameForAll
-      // ChordRendering::StrategyType::ClippedScaledFromMean
-      // ChordRendering::StrategyType::AdjustedScaledFromMean
-      // ChordRendering::StrategyType::ClippedScaledFromMax
+    setChordVelocityMappingStrategy(
+      // ChordVelocityMapping::StrategyType::None
+      ChordVelocityMapping::StrategyType::SameForAll
+      // ChordVelocityMapping::StrategyType::ClippedScaledFromMean
+      // ChordVelocityMapping::StrategyType::AdjustedScaledFromMean
+      // ChordVelocityMapping::StrategyType::ClippedScaledFromMax
     );
   }
 
 protected:
   Renderer<noteData, commandData, commandKey> renderer;
-
-  virtual void preventVoiceStealing(
-    std::vector<noteData>& notes,
-    commandData cmd
-  ) const {
-    if (stealingStrategy.get() == nullptr) return;
-    stealingStrategy->preventVoiceStealing(notes, cmd);
-  }
-
-  virtual void resetVoiceStealing() {
-    if (stealingStrategy.get() == nullptr) return;
-    stealingStrategy->reset();
-  }
 
   virtual void adjustToCommandVelocity(
     std::vector<noteData>& notes,
@@ -67,12 +48,8 @@ public:
   // must be implemented by Renderer<T,U,V>::Provider
   virtual Events::SetPair<noteData> getNextSetPair() = 0;
 
-  void setVoiceStealingStrategy(VoiceStealing::StrategyType s) {
-    stealingStrategy = VoiceStealing::createStrategy(s);
-  }
-
-  void setChordRenderingStrategy(ChordRendering::StrategyType s) {
-    chordStrategy = ChordRendering::createStrategy(s);
+  virtual void setChordVelocityMappingStrategy(ChordVelocityMapping::StrategyType s) {
+    chordStrategy = ChordVelocityMapping::createStrategy(s);
   }
 };
 
