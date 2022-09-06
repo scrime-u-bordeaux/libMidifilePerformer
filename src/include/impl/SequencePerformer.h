@@ -11,6 +11,7 @@ public:
   enum State {
     Armed,
     Playing,
+    Stopping, // when not looping and reaching the end we want to let the last command ring
     Stopped
   };
 
@@ -39,8 +40,8 @@ private:
   Chronology<noteData, std::vector> score;
 
   // some specific vars
-  bool looping;
-  std::size_t minIndex, maxIndex, currentIndex;
+  bool looping; // true if loop is enabled
+  std::size_t minIndex, maxIndex, currentIndex; // loop indices + current index
 
   // internal utilities
 
@@ -97,15 +98,21 @@ private:
   // IMPLEMENTATION OF THE PURE VIRTUAL METHOD DEFINED IN Renderer::Provider ///
   //////////////////////////////////////////////////////////////////////////////
 
-  // this method is called by the render method exclusively
+  // this method is called by the render method exclusively, through combine3
 
   virtual Events::SetPair<noteData> getNextSetPair() override { // <=> pull
-    // could this be called from any other method apart combine3 ?
     currentIndex = getNextIndex();
-    if (currentIndex == score.size()) currentState = State::Stopped;
     auto res = getCurrentSetPair();
+    
+    if (currentIndex == score.size()) {
+      currentState = State::Stopping;
+      // if we are stopping (because we reached the end index), we only let the
+      // release commands through and return 
+      currentIndex = maxIndex;
+      return res;
+    }
 
-    // set to armed after call to getNextIndex, which checks currentState value
+    // set to Playing after call to getNextIndex which checks currentState value
     if (currentState == State::Armed) {
       currentState = State::Playing;
     }
@@ -141,8 +148,14 @@ private:
   }
 
   void updateIndexFromLoopIndices() {
-    if (currentIndex < minIndex) setCurrentIndex(minIndex);
-    else if (currentIndex > maxIndex) setCurrentIndex(maxIndex);
+    if (currentIndex < minIndex) {
+      setCurrentIndex(minIndex);
+    } else if (currentIndex > maxIndex) {
+      setCurrentIndex(maxIndex);
+      currentState = State::Stopped;
+    } else {
+      setCurrentIndex(currentIndex);
+    }
   }
 
 public:
@@ -212,29 +225,28 @@ public:
     updateIndexFromLoopIndices();
   }
 
+  // stop immediately
+  // be careful when calling this method : you should either have a note event
+  // listener attached or call getAllNoteOffs before to stop pending notes
+    virtual void stop() {
+    currentState = State::Stopped;
+    std::vector<noteData> allNoteOffs = avs.getAllNoteOffs();
+    executeNoteEventsCallback(allNoteOffs);
+    avs.clear();
+    renderer.clear();
+  }
+
   virtual bool stopped() {
     return currentState == State::Stopped;
   }
 
-  // RESETTING AT INDEX TO ARMED STATE /////////////////////////////////////////
-  // this method should be called to move the head of the performer to a certain
-  // index of the chronology and set the performer state to "armed".
-  // It also triggers the callback of pending note off events to avoid dangling
-  // notes. If the callback is not used, getAllNoteOffs() can be used to get the
-  // pending note off events and they can be emitted 'by hand'
-
+  // this method calls stop, then updates currentIndex and sets state to Armed
+  // as for stop, make sure not to leave pending notes by calling getAllNoteOffs
+  // before to stop them
   virtual std::size_t setCurrentIndex(std::size_t index) {
-    // /!\ care must be taken to get all pending note offs with
-    // /!\ avs.getAllNoteOffs() before calling this method,
-    // /!\ to get a chance to stop the dangling notes this call will produce.
-
-    std::vector<noteData> allNoteOffs = avs.getAllNoteOffs();
-    executeNoteEventsCallback(allNoteOffs);
-
-    renderer.clear();
-    avs.clear();
-    currentState = State::Armed;
+    stop();
     currentIndex = std::min(maxIndex, std::max(minIndex, index));
+    currentState = State::Armed;
     return currentIndex;
   }
 
@@ -247,9 +259,10 @@ public:
   }
 
   std::vector<noteData> getAllNoteOffs() {
-    std::vector<noteData> allNoteOffs = avs.getAllNoteOffs();
-    executeNoteEventsCallback(allNoteOffs);
-    return allNoteOffs;
+    // std::vector<noteData> allNoteOffs = avs.getAllNoteOffs();
+    // executeNoteEventsCallback(allNoteOffs);
+    // return allNoteOffs;
+    return avs.getAllNoteOffs();
   }
 
   virtual std::vector<noteData> render(commandData cmd) { // <=> step
@@ -260,7 +273,13 @@ public:
     if (!score.finalized() || currentState == State::Stopped) {
       return {};
     }
-
+    /*
+    if (currentState == State::Stopping) {
+      std::cout << "stopping ..................................." << std::endl;
+      std::cout << "avs size " << avs.getTriggerCountMap().size() << std::endl;
+      std::cout << "current index " << currentIndex << std::endl;
+    }
+    //*/
     std::vector<noteData> res = renderer.combine3(cmd, this).events;
     avs.preventVoiceStealing(res);
     /*
@@ -272,8 +291,15 @@ public:
       std::cout << static_cast<int>(it->second) << std::endl;
     }
     //*/
-    if (useCommandVelocity) adjustToCommandVelocity(res, cmd.velocity);
+    if (useCommandVelocity) {
+      adjustToCommandVelocity(res, cmd.velocity);
+    }
     executeNoteEventsCallback(res);
+    if (currentState == State::Stopping && avs.getTriggerCountMap().empty()) {
+      // we let all the endings commands through
+      // std::cout << "just stopped !" << std::endl;
+      currentState = State::Stopped;
+    }
     return res;
   }
 
@@ -283,7 +309,9 @@ public:
 
   virtual void setChronology(const Chronology<noteData, std::vector>& newScore) {
     score = newScore;
-    if (score.finalized()) setLoopIndices(0, score.size() - 1);
+    if (score.finalized()) {
+      setLoopIndices(0, score.size() - 1);
+    }
   }
 };
 
