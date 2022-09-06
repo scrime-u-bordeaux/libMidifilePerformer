@@ -64,6 +64,8 @@ private:
   // ----------------------------PRIVATE FIELDS---------------------------------
   // ---------------------------------------------------------------------------
 
+  bool finalizedFlag;
+
   std::int64_t dtAccum;
 
   ChronologyParams::parameters params;
@@ -173,6 +175,8 @@ private:
         // bufferSet and inputSet will have to be separated by an empty set,
         // EXCEPT if unmeet is enabled.
         Events::Set<T> insertSet{ inputSet.dt, {} };
+        // we set the input set to come immediately after the insert set
+        inputSet.dt = 0;
 
         // If unmeet is enabled, try to fill the empty set.
         if (params.unmeet) constructInsertSet(inputSet, bufferSet, insertSet);
@@ -291,9 +295,12 @@ public:
 
   std::size_t size() { return container.size(); }
 
+  bool finalized() { return finalizedFlag; }
+
   // Called when a new event is added to the chronology.
 
   void pushEvent(std::int64_t dt, T const& data) {
+    finalizedFlag = false;
 
     // This only happens on start or after calling finalize() or clear() ;
     // the inputSet is made to be the first input.
@@ -308,11 +315,13 @@ public:
 
     // Event begins at a different time ; inputSet and bufferSet will change
     if ((dt + dtAccum) > params.temporalResolution) {
+    // if (dt > params.temporalResolution) {
       genericPushLogic(false);
 
       // The inputSet is now the most recent input.
       inputSet = { dt + dtAccum, { data } };
       dtAccum = 0;
+      // inputSet = { dt, { data }};
     } else { // this is a synchronized event ; just append to the input.
       inputSet.events.push_back(data);
       // inputSet.dt += dt;
@@ -341,6 +350,8 @@ public:
     inputSet = { 0, {} };
     bufferSet = { 0, {} };
     bufferPairState = { false, false };
+
+    finalizedFlag = true;
   }
 
   // Required for cases where we want to use container specific methods
@@ -352,6 +363,8 @@ public:
   // Completely reset the chronology.
 
   void clear() {
+    finalizedFlag = false;
+
     dtAccum = 0;
     inputSet = { 0, {} };
     bufferSet = { 0, {} };
