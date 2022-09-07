@@ -66,19 +66,6 @@ private:
     noteEventsCallback(notes);
   }
 
-  // used by getNextSetPair and peekNextSetPair
-  virtual std::size_t getNextIndex() const {
-    if (currentState == State::Armed) return currentIndex;
-    if (currentIndex < maxIndex) return currentIndex + 1;
-    if (!looping) return score.size();
-    // else : currentIndex >= maxIndex && looping
-    return minIndex;
-  }
-
-  virtual Events::SetPair<noteData> getCurrentSetPair() {
-    return getSetPairAtIndex(currentIndex);
-  }
-
   virtual Events::SetPair<noteData> getSetPairAtIndex(std::size_t index) {
     auto it = score.begin() + index;
     if (it != score.end()) return *it;
@@ -120,7 +107,7 @@ private:
       setCurrentIndex(maxIndex);
       currentState = State::Stopped;
     } else {
-      setCurrentIndex(currentIndex);
+      // setCurrentIndex(currentIndex);
     }
   }
 
@@ -284,8 +271,17 @@ public:
     return currentIndex;
   }
 
-  std::vector<noteData> getAllNoteOffs() {
-    return avs.getAllNoteOffs();
+  virtual Events::SetPair<noteData> getCurrentSetPair() {
+    return getSetPairAtIndex(currentIndex);
+  }
+
+  // used by getNextSetPair and peekNextSetPair
+  virtual std::size_t getNextIndex() const {
+    if (currentState == State::Armed) return currentIndex;
+    if (currentIndex < maxIndex) return currentIndex + 1;
+    if (!looping) return score.size();
+    // else : currentIndex >= maxIndex && looping
+    return minIndex;
   }
 
   virtual Events::SetPair<noteData> peekNextSetPair() { // <=> "peek"
@@ -293,9 +289,14 @@ public:
   }
 
   /**
-   * the only way to move forward in the chronology is to call this method !!!
+   * the only way to move forward in the chronology is to call this method
+   * (or its overload below) !!!
    */
-  virtual std::vector<noteData> render(commandData cmd) { // <=> "pull"
+  virtual std::vector<noteData> render(commandData cmd) {
+    return render(cmd, true);
+  }
+
+  virtual std::vector<noteData> render(commandData cmd, bool useCommandVelocity) { // <=> "pull"
     if (!score.finalized() || currentState == State::Stopped) return {};
 
     std::vector<noteData> res = renderer.combine3(cmd, this).events;
@@ -305,9 +306,16 @@ public:
       currentState = State::Stopped;
     }
 
-    adjustToCommandVelocity(res, cmd.velocity);
+    if (useCommandVelocity) {
+      adjustToCommandVelocity(res, cmd.velocity);
+    }
+
     executeNoteEventsCallback(res);
     return res;
+  }
+
+  std::vector<noteData> getAllNoteOffs() {
+    return avs.getAllNoteOffs();
   }
 
   virtual Chronology<noteData, std::vector> getChronology() {
