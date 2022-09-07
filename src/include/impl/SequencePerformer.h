@@ -294,7 +294,7 @@ public:
 
   /**
    * the only way to move forward in the chronology is to call this method
-   * (or its overload below) !!!
+   * or its overload version below !!!
    */
   virtual std::vector<noteData> render(commandData cmd) {
     return render(cmd, true);
