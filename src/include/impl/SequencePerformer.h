@@ -327,6 +327,7 @@ public:
 
     if (score.finalized()) {
       setLoopIndices(0, score.size() - 1);
+      setCurrentIndex(0);
     }
   }
 };
