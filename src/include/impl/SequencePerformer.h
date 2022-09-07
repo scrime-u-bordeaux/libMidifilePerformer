@@ -173,6 +173,12 @@ private:
     return res;
   }
 
+  void prepareLocalState(){
+    createAvsHistoryFromScore();
+    setLoopIndices(0, (score.size() == 0) ? 0 : (score.size() - 1));
+    setCurrentIndex(0);
+  }
+
 public:
   SequencePerformer() :
   AbstractPerformer(), score(Chronology<noteData, std::vector>()),
@@ -208,10 +214,8 @@ public:
   }
 
   virtual void finalize() {
-    score.finalize();
-    createAvsHistoryFromScore();
-    setLoopIndices(0, (score.size() == 0) ? 0 : (score.size() - 1));
-    setCurrentIndex(0);
+    if(!score.finalized()) score.finalize();
+    prepareLocalState();
   }
 
   virtual bool getLooping() { return looping; }
@@ -324,11 +328,7 @@ public:
 
   virtual void setChronology(const Chronology<noteData, std::vector>& newScore) {
     score = newScore;
-
-    if (score.finalized()) {
-      setLoopIndices(0, score.size() - 1);
-      setCurrentIndex(0);
-    }
+    finalize();
   }
 };
 
