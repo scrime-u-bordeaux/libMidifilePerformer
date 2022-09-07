@@ -87,6 +87,12 @@ private:
     }
   }
 
+  void prepareLocalState() {
+    createAvsHistoryFromScore();
+    setLoopIndices(0, (score.size() == 0) ? 0 : (score.size() - 1));
+    setCurrentIndex(0);
+  }
+
   void mergeAvsStates(
     std::map<noteKey, std::uint8_t>& target,
     const std::map<noteKey, std::uint8_t> source
@@ -138,20 +144,20 @@ private:
       return res; // will be empty if currentIndex == score.size()
     }
 
-    // set to Playing after call to getNextIndex which checks currentState value
-    if (currentState == State::Armed) {
-      currentState = State::Playing;
-    }
-
     auto activeNotes = avs.getTriggerCountMap();
 
     // if we are about to play first event in loop, we set avs to take upcoming
     // note offs from unplayed note ons into account
-    if (currentIndex == minIndex) {
+    if (currentIndex == minIndex || currentState == State::Armed) {
       // merge avs state snapshot with current avs state
       auto avsState = avsHistory[currentIndex];
       mergeAvsStates(avsState, activeNotes);
       avs.setTriggerCountMap(avsState);
+    }
+
+    // set to Playing after call to getNextIndex which checks currentState value
+    if (currentState == State::Armed) {
+      currentState = State::Playing;
     }
 
     // if we are getting the last set pair, we might have some pending endings
@@ -171,12 +177,6 @@ private:
     }
 
     return res;
-  }
-
-  void prepareLocalState(){
-    createAvsHistoryFromScore();
-    setLoopIndices(0, (score.size() == 0) ? 0 : (score.size() - 1));
-    setCurrentIndex(0);
   }
 
 public:
