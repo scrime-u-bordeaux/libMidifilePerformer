@@ -1,6 +1,8 @@
 #ifndef MFP_CHORDVELOCITYMAPPING_H
 #define MFP_CHORDVELOCITYMAPPING_H
 
+#include <memory>
+
 #include "NoteAndCommandEvents.h"
 
 namespace ChordVelocityMapping {

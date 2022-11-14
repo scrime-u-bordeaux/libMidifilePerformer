@@ -1,6 +1,8 @@
 #ifndef MFP_SEQUENCEPERFORMER_H
 #define MFP_SEQUENCEPERFORMER_H
 
+#include <functional>
+
 #include "NoteAndCommandEvents.h"
 #include "AntiVoiceStealing.h"
 #include "AbstractPerformer.h"
@@ -24,7 +26,7 @@
 class SequencePerformer : public AbstractPerformer {
 public:
   // Stopping state : when not looping and reaching the end we want to let the
-  // last command ring, so we enter this state in which 
+  // last command ring, so we enter this state in which
   enum State {
     Armed,
     Playing,
@@ -78,7 +80,7 @@ private:
     avsHistory = { emptyMap };
 
     auto it = score.begin();
-  
+
     while (it != score.end()) {
       avs.preventVoiceStealing(it->start.events);
       avs.preventVoiceStealing(it->end.events);
@@ -136,7 +138,7 @@ private:
   virtual Events::SetPair<noteData> getNextSetPair() override { // <=> pull
     currentIndex = getNextIndex();
     auto res = getCurrentSetPair();
-    
+
     // this will be executed as long as currentState != State::Stopped
     if (currentIndex == score.size()) {
       currentState = State::Stopping;
