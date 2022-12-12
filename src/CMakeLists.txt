@@ -1,6 +1,6 @@
 set(CMAKE_STATIC_LIBRARY_PREFIX "")
 
-add_library(libMidifilePerformer
+add_library(libMidifilePerformer SHARED
   cpp/impl/ChordVelocityMapping.cpp
 )
 
