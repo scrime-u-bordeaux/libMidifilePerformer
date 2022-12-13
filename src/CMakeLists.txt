@@ -2,6 +2,7 @@ set(CMAKE_STATIC_LIBRARY_PREFIX "")
 
 add_library(libMidifilePerformer SHARED
   cpp/impl/ChordVelocityMapping.cpp
+  cpp/impl/UnityDllWrapper.cpp
 )
 
 set_target_properties(libMidifilePerformer
@@ -19,6 +20,10 @@ set_target_properties(libMidifilePerformer
 # target_compile_options(libMidifilePerformer
 #   PRIVATE ${SANITIZER_FLAGS} ${DEFAULT_COMPILER_OPTIONS_AND_WARNINGS}
 # )
+
+target_compile_options(libMidifilePerformer
+    PRIVATE -DNATIVECPPLIBRARY_EXPORTS=1 -static-libgcc -static-libstdc++
+)
 
 target_link_libraries(libMidifilePerformer
   # PRIVATE ${SANITIZER_FLAGS}
