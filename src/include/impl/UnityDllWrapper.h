@@ -9,6 +9,8 @@
 
 #define ADDCALL __cdecl
 
-extern "C" NATIVECPPLIBRARY_API int pushMPTKEvent();//(bool pressed, int pitch, int channel, int velocity);
+extern "C" NATIVECPPLIBRARY_API void pushMPTKEvent(long tick, bool pressed, int pitch, int channel, int velocity);
+
+extern "C" NATIVECPPLIBRARY_API void finalizePerformer();
 
 #endif

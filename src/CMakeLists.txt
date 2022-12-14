@@ -22,7 +22,7 @@ set_target_properties(libMidifilePerformer
 # )
 
 target_compile_options(libMidifilePerformer
-    PRIVATE -DNATIVECPPLIBRARY_EXPORTS=1 -static-libgcc -static-libstdc++
+    PRIVATE -DNATIVECPPLIBRARY_EXPORTS=1 -D_ENFORCE_MATCHING_ALLOCATORS=0
 )
 
 target_link_libraries(libMidifilePerformer
