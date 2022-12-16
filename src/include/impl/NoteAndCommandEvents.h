@@ -30,6 +30,20 @@ struct commandData {
   uint8_t id;
   uint8_t velocity;
   uint8_t channel;
+
+  explicit operator unsigned long() const {
+      uint8_t firstByte = 0;
+      if (pressed) firstByte = 0x90;
+      else firstByte = 0x80;
+
+      firstByte += channel;
+
+      uint8_t secondByte = id;
+      uint8_t thirdByte = velocity;
+
+      unsigned long result = (firstByte << 16 | secondByte << 8 | thirdByte);
+      return result;
+  }
 };
 
 inline std::ostream& operator<<(std::ostream& os, struct commandData const &cmd){
@@ -77,6 +91,20 @@ struct noteData {
       velocity != note.velocity ||
       channel != note.channel
     );
+  }
+
+  explicit operator unsigned long() const {
+      uint8_t firstByte = 0;
+      if (on) firstByte = 0x90;
+      else firstByte = 0x80;
+
+      firstByte += channel;
+
+      uint8_t secondByte = pitch;
+      uint8_t thirdByte = velocity;
+
+      unsigned long result = (firstByte << 16 | secondByte << 8 | thirdByte);
+      return result;
   }
 };
 

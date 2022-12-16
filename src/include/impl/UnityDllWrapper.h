@@ -18,6 +18,6 @@ extern "C" NATIVECPPLIBRARY_API void clearPerformer();
 
 extern "C" NATIVECPPLIBRARY_API void finalizePerformer();
 
-extern "C" NATIVECPPLIBRARY_API unsigned long renderCommand(bool pressed, int ID, unsigned long* dataContainer, unsigned int size);
+extern "C" NATIVECPPLIBRARY_API void renderCommand(bool pressed, int ID, unsigned long* dataContainer);
 
 #endif
