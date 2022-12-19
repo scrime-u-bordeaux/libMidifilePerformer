@@ -28,8 +28,8 @@ void finalizePerformer() {
     unityPerformer.finalize();
 }
 
-void renderCommand(bool pressed, int ID, unsigned long* dataContainer) {
+void renderCommand(bool pressed, int ID, uint64_t* dataContainer) {
     commandData command(pressed, ID, DEFAULT_VELOCITY, DEFAULT_CHANNEL);
     std::vector<noteData> result = unityPerformer.render(command);
-    for (noteData const& event : result) *dataContainer++ = static_cast<unsigned long>(event);
+    for (noteData const& event : result) *dataContainer++ = static_cast<uint64_t>(event);
 }
