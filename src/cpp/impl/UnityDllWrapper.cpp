@@ -5,9 +5,7 @@ static ChronologyParams::parameters constexpr unityParams = {
         .unmeet = true,
         .complete = false,
         .shiftMode = Events::correspondOption::PITCH_ONLY,
-        //.temporalResolution = 10 THIS MUST BE CORRECTED 
-        // WE HAVE TO CONVERT EVERYTHING TO MS FOR THIS TO MEAN SOMETHING
-        // For now it's disabled
+        .temporalResolution = 10
 };
 
 SequencePerformer unityPerformer(unityParams);
