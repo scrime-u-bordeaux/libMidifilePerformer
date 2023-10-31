@@ -251,10 +251,14 @@ public:
   // stop immediately
   // be careful when calling this method : you should either have a note event
   // listener attached or call getAllNoteOffs before to stop pending notes
-  virtual void stop() {
+  virtual void stop(bool killSound) {
     currentState = State::Stopped;
-    std::vector<noteData> allNoteOffs = avs.getAllNoteOffs();
-    executeNoteEventsCallback(allNoteOffs);
+
+    if(killSound) {
+      std::vector<noteData> allNoteOffs = avs.getAllNoteOffs();
+      executeNoteEventsCallback(allNoteOffs);
+    }
+
     avs.clear();
     renderer.clear();
   }
@@ -266,8 +270,8 @@ public:
   // this method calls stop, then updates currentIndex and sets state to Armed
   // as for stop, make sure to call getAllNoteOffs before to stop pending notes
   // if you don't have a note event listener
-  virtual std::size_t setCurrentIndex(std::size_t index) {
-    stop();
+  virtual std::size_t setCurrentIndex(std::size_t index, bool killSound = true) {
+    stop(killSound);
     currentIndex = std::min(maxIndex, std::max(minIndex, index));
     currentState = State::Armed;
     return currentIndex;
