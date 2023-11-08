@@ -15,11 +15,12 @@ private:
   std::map<noteKey, std::uint8_t> triggerCountMap;
 
 public:
-  void preventVoiceStealing(std::vector<noteData>& notes) {
+  std::vector<noteData> preventVoiceStealing(const std::vector<noteData>& notes) {
+    std::vector<noteData> copiedNotes = notes;
     std::vector<noteData> addedNoteOffs;
-    auto it = notes.begin();
+    auto it = copiedNotes.begin();
 
-    while (it != notes.end()) {
+    while (it != copiedNotes.end()) {
       auto nData = *it;
       noteKey key = Events::keyFromData<noteData, noteKey>(nData);
 
@@ -41,7 +42,7 @@ public:
           triggerCountMap[key]++;
           it++;
         } else if (triggerCountMap[key] > 1) {
-          notes.erase(it);
+          copiedNotes.erase(it);
           // keep track of simultaneous note ons
           triggerCountMap[key]--;
         } else {
@@ -52,8 +53,9 @@ public:
       }
     }
 
-    addedNoteOffs.insert(addedNoteOffs.end(), notes.begin(), notes.end());
-    notes = addedNoteOffs;
+    addedNoteOffs.insert(addedNoteOffs.end(), copiedNotes.begin(), copiedNotes.end());
+    copiedNotes = addedNoteOffs;
+    return copiedNotes;
   }
 
   std::vector<noteData> getAllNoteOffs() {
@@ -70,7 +72,7 @@ public:
         res.push_back({ false, it->first.pitch, 0, it->first.channel });
       }
     }
-    
+
     return res;
   }
 

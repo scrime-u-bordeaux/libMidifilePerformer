@@ -87,6 +87,8 @@ private:
       avsHistory.push_back(avs.getTriggerCountMap());
       it++;
     }
+
+    // There should be no need to clear the triggerCountMap, because it should be empty by the end of the piece.
   }
 
   void prepareLocalState() {
@@ -310,7 +312,7 @@ public:
     if (!score.finalized() || currentState == State::Stopped) return {};
 
     std::vector<noteData> res = renderer.combine3(cmd, this).events;
-    avs.preventVoiceStealing(res);
+    res = avs.preventVoiceStealing(res);
 
     if (currentState == State::Stopping && avs.getTriggerCountMap().empty()) {
       currentState = State::Stopped;
