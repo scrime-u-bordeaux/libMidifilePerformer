@@ -115,7 +115,6 @@ private:
       setCurrentIndex(minIndex);
     } else if (currentIndex > maxIndex) {
       setCurrentIndex(maxIndex);
-      currentState = State::Stopped;
     } else {
       // setCurrentIndex(currentIndex);
     }
