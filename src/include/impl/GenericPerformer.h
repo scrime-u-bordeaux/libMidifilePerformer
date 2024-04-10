@@ -15,9 +15,7 @@
 // to be finalized
 
 // NB : this API is not clean and mostly experimental
-// it could be used wrongly if pull AND iterate approaches are mixed
-
-// todo : add an anti voice stealing instance as in SequencePerformer
+// it could be used wrongly if pull AND iterate approaches were mixed
 
 template <
   template <

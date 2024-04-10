@@ -88,7 +88,8 @@ private:
       it++;
     }
 
-    // There should be no need to clear the triggerCountMap, because it should be empty by the end of the piece.
+    // There should be no need to clear the triggerCountMap
+    // because it should be empty by the end of the piece.
   }
 
   void prepareLocalState() {
