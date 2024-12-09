@@ -329,6 +329,15 @@ public:
     return avs.getAllNoteOffs();
   }
 
+  // Not to be confused with getAllNoteOffs,
+  // This method only returns note offs for keys currently pending ;
+  // In other words, it does not terminate notes which would be prolonged beyond
+  // the current index.
+
+  std::vector<noteData> getAllPendingNoteOffs() {
+    return renderer.getAllPendingNoteOffs();
+  }
+
   virtual Chronology<noteData, std::vector> getChronology() {
     return score;
   }

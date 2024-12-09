@@ -68,6 +68,16 @@ public:
     }
   }
 
+  std::vector<Model> getAllPendingNoteOffs() {
+    std::vector<Model> res;
+
+    for (const auto &entry : pendingEndingSets) {
+      res.insert(res.end(), entry.second.events.begin(), entry.second.events.end());
+    }
+
+    return res;
+  }
+
 public:
   virtual ~Renderer() {}
 };
