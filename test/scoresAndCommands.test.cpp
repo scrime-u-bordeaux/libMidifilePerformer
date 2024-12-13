@@ -1,6 +1,6 @@
 #include <iostream>
 #include <catch2/catch_test_macros.hpp>
-#include "MFPRenderer.h"
+#include "SequencePerformer.h"
 #include "./utilities.h"
 
 // VARIOUS SCORES //////////////////////////////////////////////////////////////
@@ -112,7 +112,7 @@ const std::vector<commandData> genericCommands = {
   makeCommand(false,  60)
 };
 
-MFPRenderer renderer;
+SequencePerformer performer;
 
 // TESTS ///////////////////////////////////////////////////////////////////////
 
@@ -135,8 +135,8 @@ TEST_CASE("minimal") {
     }
   };
 
-  feedRenderer(renderer, minimalScore);
-  auto res = getPerformanceResults(renderer, minimalCommands);
+  feedPerformer(performer, minimalScore);
+  auto res = getPerformanceResults(performer, minimalCommands);
 
   REQUIRE(performanceResultsAreIdentical(res, expected));
 
@@ -169,8 +169,8 @@ TEST_CASE("displaced ending") {
     { makeNote(false, 80) },
   };
 
-  feedRenderer(renderer, maxDisplacementScore);
-  auto res = getPerformanceResults(renderer, genericCommands);
+  feedPerformer(performer, maxDisplacementScore);
+  auto res = getPerformanceResults(performer, genericCommands);
 
   REQUIRE(performanceResultsAreIdentical(res, expected));
   // REQUIRE(true);
@@ -210,8 +210,8 @@ TEST_CASE("full score") {
     incompleteCoherentScoreComplement.end()
   );
 
-  feedRenderer(renderer, fullScore);
-  auto res = getPerformanceResults(renderer, genericCommands);
+  feedPerformer(performer, fullScore);
+  auto res = getPerformanceResults(performer, genericCommands);
 
   REQUIRE(performanceResultsAreIdentical(res, expected));
   // REQUIRE(true);
@@ -243,8 +243,8 @@ TEST_CASE("incomplete score") {
     }
   };
 
-  feedRenderer(renderer, incompleteCoherentScore);
-  auto res = getPerformanceResults(renderer, genericCommands);
+  feedPerformer(performer, incompleteCoherentScore);
+  auto res = getPerformanceResults(performer, genericCommands);
 
   REQUIRE(performanceResultsAreIdentical(res, expected));
   // REQUIRE(true);
@@ -268,8 +268,8 @@ TEST_CASE("incoherent score") {
     {}
   };
 
-  feedRenderer(renderer, incoherentScore);
-  auto res = getPerformanceResults(renderer, genericCommands);
+  feedPerformer(performer, incoherentScore);
+  auto res = getPerformanceResults(performer, genericCommands);
 
   REQUIRE(performanceResultsAreIdentical(res, expected));
   // REQUIRE(true);
@@ -301,8 +301,8 @@ TEST_CASE("sync") {
     {}
   };
 
-  feedRenderer(renderer, makeDesyncScore(0));
-  auto res = getPerformanceResults(renderer, genericCommands);
+  feedPerformer(performer, makeDesyncScore(0));
+  auto res = getPerformanceResults(performer, genericCommands);
 
   REQUIRE(performanceResultsAreIdentical(res, expected));
   // REQUIRE(true);
@@ -361,8 +361,8 @@ TEST_CASE("desync") {
     //*/
   };
 
-  feedRenderer(renderer, makeDesyncScore(1));
-  auto res = getPerformanceResults(renderer, genericCommands);
+  feedPerformer(performer, makeDesyncScore(1));
+  auto res = getPerformanceResults(performer, genericCommands);
 
   REQUIRE(performanceResultsAreIdentical(res, expected));
   // REQUIRE(true);

@@ -19,26 +19,30 @@ namespace ChronologyParams{
         int temporalResolution; // Time threshold under which the events will be considered simultaneous
         // and merged in a single set.
         // MIDI Standard is 0.
-
-        uint64_t date; // Unused for now, purpose unknown
     };
 
     static parameters constexpr default_params = {
         .unmeet = true,
         .complete = false,
-        .temporalResolution = 0,
-        .date = 0
+        .temporalResolution = 0
     };
 
     static parameters constexpr no_unmeet = {
         .unmeet = false,
         .complete = false,
-        .temporalResolution = 0,
-        .date = 0
+        .temporalResolution = 0
     };
 }
 
-template <typename T>
+// to be instantiated like Chronology<SomeEventType, std::vector>
+// or Chronology<SomeEventType, std::list>
+template <
+  typename T,
+  template <
+    typename = Events::SetPair<T>,
+    typename = std::allocator<Events::SetPair<T>>
+  > class Container
+>
 class Chronology {
 
   // ---------------------------------------------------------------------------
@@ -60,15 +64,25 @@ private:
   // ----------------------------PRIVATE FIELDS---------------------------------
   // ---------------------------------------------------------------------------
 
+  bool finalizedFlag;
+
+  std::int64_t dtAccum;
+
   ChronologyParams::parameters params;
 
   Events::Set<T> inputSet; // Set containing the most recent input
 
-  Events::Set<T> bufferSet; // Set containing previous data
-  // not yet pushed to the fifo, to be altered depending on various conditions
+  Events::Set<T> bufferSet; // Set containing previous data not yet pushed
+  // to the container, to be altered depending on various conditions
 
-  std::list<Events::Set<T>> fifo; // The user-facing front of the chronology.
-  // It is where events are pushed to and pulled from.
+  Events::SetPair<T> bufferPair; // SetPair constructed along and pushed
+  // when both start and end fields have been filled
+
+  std::pair<bool, bool> bufferPairState; // flags to keep track of bufferPair
+  // construction state (if both flags true, bufferPair can be pushed)
+
+  Container<Events::SetPair<T>> container; // The user-facing front of the
+  // chronology. It is where events are pushed to and pulled from.
 
   std::list<struct incompleteEventSet> incompleteEvents; // The events for which
   // a beginning was pushed, but no immediate end
@@ -102,8 +116,9 @@ private:
     return !insertSet.events.empty();
   }
 
-  // Checks whether incomplete events can be completed using the current inputSet.
-  // Inserts the corresponding endings directly into the empty set that follows them.
+  // Checks whether incomplete events can be completed using the current
+  // inputSet. Inserts the corresponding endings directly into the empty set
+  // that follows them.
 
   void checkForEventCompletion() {
 
@@ -114,112 +129,123 @@ private:
     if (!incompleteEvents.empty()) std::erase_if(incompleteEvents, predicate);
   }
 
-  // The set of steps followed when modifying or pushing the bufferSet and inputSet.
-  // Used by pushEvent to update the chronology, but also lastPush to finalize it.
+  // The set of steps followed when modifying or pushing bufferSet and inputSet.
+  // Used by pushEvent to update the chronology and by finalize to finalize it.
 
   void genericPushLogic(bool last) {
 
-    // In this case, the bufferSet is either empty or an ending set
+    // bufferSet is an ending set //////////////////////////////////////////////
     if (!Events::hasStart<T>(bufferSet)) {
-
-      // The inputSet is ALSO an ending set. So they can be merged.
+      // inputSet is ALSO an ending set ////////////////////////////////////////
       if (!Events::hasStart<T>(inputSet)) {
-
+        // bufferSet and inputSet must be merged :
         Events::mergeSets(bufferSet,inputSet);
         bufferSet.dt += inputSet.dt;
-        if (last) fifo.push_back(bufferSet);
-        return;
 
-      } else { // the inputSet is a starting set (it has a least one start event)
-
-        // Guard against pushing an empty set in the first position of the fifo
-        // Pushing an empty set in other cases is fine, it is an artifical ending
-
-        if (!fifo.empty()) {
-          fifo.push_back(bufferSet);
+        if (last && bufferPairState.first) {
+          bufferPair.end = bufferSet;
+          bufferPairState.second = true;
+          container.push_back(bufferPair);
+        }
+      // inputSet is a starting set ////////////////////////////////////////////  
+      } else { 
+        // Guard against pushing an incomplete pair if no starting set has been
+        // created yet
+        if (bufferPairState.first) {
+          bufferPair.end = bufferSet;
+          bufferPairState.second = true;
+          container.push_back(bufferPair);
         }
 
-        if (last) fifo.push_back(inputSet);
-        else bufferSet = inputSet;
-
-        return;
+        if (last) {
+          bufferPair.start = inputSet;
+          bufferPair.end = { 0, {} };
+          bufferPairState = { true, true };
+          container.push_back(bufferPair);
+        } else {
+          bufferSet = inputSet;
+        }
       }
-
+    // bufferSet is a starting set /////////////////////////////////////////////
     } else {
+      bufferPair.start = bufferSet;
+      bufferPairState = { true, false };
 
-      // The bufferSet is a starting set
-
-      fifo.push_back(bufferSet); // First, push it.
-
-      if (Events::hasStart<T>(inputSet)) { // The inputSet is ALSO a starting set.
-        // so the two will have to be separated by an empty set,
+      // inputSet is ALSO a starting set ///////////////////////////////////////
+      if (Events::hasStart<T>(inputSet)) {
+        // bufferSet and inputSet will have to be separated by an empty set,
         // EXCEPT if unmeet is enabled.
-        Events::Set<T> insertSet{inputSet.dt, {}};
+        Events::Set<T> insertSet{ inputSet.dt, {} };
+        // we set the input set to come immediately after the insert set
+        inputSet.dt = 0;
 
         // If unmeet is enabled, try to fill the empty set.
-        if (params.unmeet) constructInsertSet(inputSet,bufferSet,insertSet);
+        if (params.unmeet) constructInsertSet(inputSet, bufferSet, insertSet);
 
-        // Push the set regardless to stay consistent with the format.
-        fifo.push_back(insertSet);
+        // complete and push the SetPair
+        bufferPair.end = insertSet;
+        bufferPairState.second = true;
+        container.push_back(bufferPair);
 
         // If it IS empty, register the bufferSet as incomplete.
-        if (params.complete && insertSet.events.empty())
-            incompleteEvents.push_back({bufferSet,&fifo.back()});
+        if (params.complete && insertSet.events.empty()) {
+          // incompleteEvents.push_back({ bufferSet, &container.back() });
+          incompleteEvents.push_back({ bufferSet, &(container.back().end) });
+        }
       }
 
-      if (last) fifo.push_back(inputSet);
-      else bufferSet = inputSet;
-
-      return;
+      if (last) {
+        // input set is a starting set so the pair was completed with insertSet
+        // and pushed to the container, now we need to create the last pair
+        if (bufferPairState.second) {
+          bufferPair.start = inputSet;
+          bufferPair.end = { 0, {} };
+        // inputSet is an ending set so we just complete the pair with it
+        } else {
+          bufferPair.end = inputSet;
+        }
+        container.push_back(bufferPair);
+      } else {
+        bufferSet = inputSet;
+      }
     }
   }
 
-  // Called by finalize() to cleanly push the last sets,
-  // AFTER checking for incomplete events one last time.
+  // Move the ending of any events that have been synchronized with an identical
+  // start and placed later in the set (causing that start not to play) before
+  // said start in the set.
 
-  void lastPush() {
-    if (params.complete) checkForEventCompletion();
-    genericPushLogic(true);
+  void shiftSameEventEndings(Events::Set<T>& set) {
+    std::vector<T> otherEvents;
+    std::vector<T> endingsToShift;
+    bool matched = false;
+
+    for (T const& event : set.events) {
+      for (T const& otherEvent : otherEvents) {
+
+        if (
+          Events::isStart<T>(otherEvent) &&
+          Events::isMatchingEnd(otherEvent, event, params.shiftMode)
+        ) {
+          matched = true;
+          endingsToShift.push_back(event);
+          break;
+        }
+      }
+
+      if (!matched) otherEvents.push_back(event);
+      matched = false;
+    }
+
+    Events::Set<T> newSet = { set.dt, endingsToShift };
+    Events::mergeSets(newSet, otherEvents);
+    set = newSet;
   }
 
-  // Move the ending of any events that have been synchronized with an identical start and placed later in the set
-  // (causing that start not to play)
-  // before said start in the set.
-
-  void shiftSameEventEndings(){
-      std::vector<T> otherEvents;
-      std::vector<T> endingsToShift;
-      bool matched=false;
-
-      for(Events::Set<T>& set : fifo){
-          otherEvents.clear();
-          endingsToShift.clear();
-          matched=false;
-
-          int eventIndex = 0;
-
-          for(T const& event : set.events){
-
-              for(T const& otherEvent : otherEvents){
-
-                  if(Events::isStart<T>(otherEvent)
-                  && Events::isMatchingEnd(otherEvent,event,params.shiftMode)){
-                      matched=true;
-                      endingsToShift.push_back(event);
-                      break;
-                  }
-
-              }
-
-              if(!matched) otherEvents.push_back(event);
-              matched = false;
-
-          }
-
-          Events::Set<T> newSet = { set.dt, endingsToShift };
-          Events::mergeSets(newSet,otherEvents);
-          set = newSet;
-      }
+  void shiftSameEventEndings() {
+    for (Events::SetPair<T>& set : container) {
+      shiftSameEventEndings(set.start);
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -230,56 +256,80 @@ public:
   // -------------------------------OVERLOADING---------------------------------
   // ---------------------------------------------------------------------------
 
-  template <class E>
-  friend std::ostream& operator<<(std::ostream& os, struct Chronology<E> const &c);
+  template <
+    typename E,
+    template <
+      typename = Events::SetPair<E>,
+      typename = std::allocator<Events::SetPair<E>>
+    > class C
+  >
+  friend std::ostream& operator<<(
+    std::ostream& os,
+    struct Chronology<E, C> const &c
+  );
 
   // ---------------------------------------------------------------------------
   // ------------------------CONSTRUCTORS/DESTRUCTORS---------------------------
   // ---------------------------------------------------------------------------
 
-  Chronology() : params(ChronologyParams::default_params) {}
-  Chronology(ChronologyParams::parameters initParams) : params(initParams) {}
+  Chronology() :
+  params(ChronologyParams::default_params),
+  bufferPairState(false, false), dtAccum(0) {}
+
+  Chronology(ChronologyParams::parameters initParams) :
+  params(initParams),
+  bufferPairState(false, false), dtAccum(0) {}
+
   ~Chronology() {}
 
   // ---------------------------------------------------------------------------
   // -----------------------------PUBLIC METHODS--------------------------------
   // ---------------------------------------------------------------------------
 
-  typename std::list<Events::Set<T>>::iterator begin() { return fifo.begin(); }
+  typename Container<Events::SetPair<T>>::iterator begin() {
+    return container.begin();
+  }
 
-  typename std::list<Events::Set<T>>::iterator end() { return fifo.end(); }
+  typename Container<Events::SetPair<T>>::iterator end() {
+    return container.end();
+  }
 
-  std::size_t size() { return fifo.size(); }
+  std::size_t size() const { return container.size(); }
+
+  bool finalized() const { return finalizedFlag; }
 
   // Called when a new event is added to the chronology.
 
-  void pushEvent(int dt, T const& data) {
+  void pushEvent(std::int64_t dt, T const& data) {
+    finalizedFlag = false;
 
     // This only happens on start or after calling finalize() or clear() ;
     // the inputSet is made to be the first input.
-
     if (inputSet.events.empty()) {
-      inputSet = {dt, {data}};
+      inputSet = { dt, { data } };
       return;
     }
 
     // Before doing anything else, check whether the current inputSet
     // can complete a previously incomplete event.
-
     if (params.complete) checkForEventCompletion();
 
-    if (dt > params.temporalResolution) { // Event begins at a different time ; inputSet and bufferSet will change
-
+    // Event begins at a different time ; inputSet and bufferSet will change
+    if ((dt + dtAccum) > params.temporalResolution) {
+    // if (dt > params.temporalResolution) {
       genericPushLogic(false);
 
       // The inputSet is now the most recent input.
-      inputSet = {dt, {data}};
-
+      inputSet = { dt + dtAccum, { data } };
+      dtAccum = 0;
+      // inputSet = { dt, { data }};
     } else { // this is a synchronized event ; just append to the input.
       inputSet.events.push_back(data);
+      // inputSet.dt += dt;
+      dtAccum += dt;
+      // or use dtAccum var to keep track of "drift" due to temporalResolution 
+      // and separate far enough events?
     }
-
-    //std::cout << *this << std::endl;
   }
 
   // ---------------------------------------------------------------------------
@@ -288,71 +338,39 @@ public:
 
   void finalize() {
 
-    // Pushes the bufferSet and inputSet to fifo with the same rules as a normal push
-
-    lastPush();
-
-    if (Events::hasStart<T>(inputSet)) {
-      fifo.push_back({1, {}});
-    }
+    // Pushes the bufferSet and inputSet to container with the same rules
+    // as a normal push
+    if (params.complete) checkForEventCompletion();
+    genericPushLogic(true);
 
     // Ensure no start events precede a corresponding end event in any set.
-
     shiftSameEventEndings();
 
     // Reset the inner sets.
+    dtAccum = 0;
+    inputSet = { 0, {} };
+    bufferSet = { 0, {} };
+    bufferPairState = { false, false };
 
-    bufferSet.events.clear();
-    inputSet.events.clear();
-
-    //std::cout << *this << std::endl;
+    finalizedFlag = true;
   }
 
-  // Self-explanatory.
+  // Required for cases where we want to use container specific methods
 
-  bool hasEvents() {
-    return fifo.size() > 0;
-  }
-
-  // Simply get the first set of events in the fifo.
-  // Returns an empty vector if the fifo is empty.
-
-  std::vector<T> pullEvents() {
-    Events::Set<T> res;
-
-    if (!this->hasEvents()) {
-      return std::vector<T>();
-    }
-
-    res = fifo.front();
-    fifo.pop_front();
-
-    /*std::cout << "C++ debug : pulled events = [ ";
-    for(T& e : res.events){
-        std::cout << e << " , ";
-    }
-    std::cout << " ]" << std::endl;*/
-
-    return res.events;
-  }
-
-  Events::Set<T> pullEventsSet() {
-    if (!this->hasEvents()){
-      return {0,std::vector<T>()};
-    }
-
-    Events::Set<T> res = fifo.front();
-    fifo.pop_front();
-
-    return res;
+  Container<Events::SetPair<T>>& getContainer() {
+    return container;
   }
 
   // Completely reset the chronology.
 
   void clear() {
-    fifo.clear();
-    inputSet.events.clear();
-    bufferSet.events.clear();
+    finalizedFlag = false;
+
+    dtAccum = 0;
+    inputSet = { 0, {} };
+    bufferSet = { 0, {} };
+    bufferPairState = { false, false };
+    container.clear();
   }
 };
 
@@ -360,13 +378,23 @@ public:
 // ----------------------------FRIEND FUNCTIONS---------------------------------
 // -----------------------------------------------------------------------------
 
-template <typename T>
-std::ostream& operator<<(std::ostream& os, struct Chronology<T> const &c){
+template <
+  typename T,
+  template <
+    typename = Events::SetPair<T>,
+    typename = std::allocator<Events::SetPair<T>>
+  > class Container
+>
+std::ostream& operator<<(
+  std::ostream& os,
+  struct Chronology<T, Container> const &c
+) {
   os << "Chronology Input Set : " << c.inputSet  << std::endl;
   os << "Chronology Buffer Set : " << c.bufferSet << std::endl;
-  os << "Chronology Fifo : " << std::endl;
-  for(Events::Set<T> const & s : c.fifo){
-    os << s << std::endl;
+  os << "Chronology Container : " << std::endl;
+  for (const Events::SetPair<T>& s : c.container) {
+    os << s.start << std::endl;
+    os << s.end << std::endl;
   }
   return os;
 }

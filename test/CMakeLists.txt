@@ -58,4 +58,5 @@ if(BUILD_TESTING)
         add_test(NAME ${target} COMMAND ${target})
     endforeach()
 endif()
-]]
+#]]
+

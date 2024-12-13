@@ -1,8 +1,9 @@
 #ifndef MFP_CHORDVELOCITYMAPPING_H
 #define MFP_CHORDVELOCITYMAPPING_H
 
-// #include <memory>
-#include "MFPEvents.h"
+#include <memory>
+
+#include "NoteAndCommandEvents.h"
 
 namespace ChordVelocityMapping {
 
@@ -21,6 +22,7 @@ public:
 // LIST OF STRATEGY IMPLEMENTATIONS ////////////////////////////////////////////
 
 enum class StrategyType {
+  None,
   SameForAll,
   ClippedScaledFromMean,
   AdjustedScaledFromMean,
@@ -29,6 +31,7 @@ enum class StrategyType {
 
 // STRATEGY FACTORY FUNCTION ///////////////////////////////////////////////////
 
+// will return a nullptr is strategy type is none
 std::shared_ptr<Strategy> createStrategy(StrategyType s);
 
 } /* END NAMESPACE ChordVelocityMapping */

@@ -1,13 +1,13 @@
 #include <iostream>
 #include <catch2/catch_test_macros.hpp>
-#include "MFPRenderer.h"
+#include "SequencePerformer.h"
 #include "./utilities.h"
 
 SCENARIO("mapping the relative note velocities of a chord") {
 
   // SOME VARIABLES USED ACROSS TESTS //////////////////////////////////////////
 
-  MFPRenderer renderer;
+  SequencePerformer performer;
 
   // UTILITIES /////////////////////////////////////////////////////////////////
 
@@ -35,15 +35,15 @@ SCENARIO("mapping the relative note velocities of a chord") {
   };
 
   auto getFirstScoreEventsFromVelocities = [](
-    MFPRenderer& renderer,
+    SequencePerformer& performer,
     const std::vector<noteEvent>& score,
     const std::vector<std::uint8_t>& velocities
   ) -> std::vector<noteData> {
       std::vector<noteData> allRes;
       for (auto velocity : velocities) {
-        feedRenderer(renderer, score);
+        feedPerformer(performer, score);
         auto res = getPerformanceResults(
-          renderer,
+          performer,
           { makeCommand(true, 60, velocity) }
         );
         allRes.insert(allRes.end(), res[0].begin(), res[0].end());
@@ -54,14 +54,14 @@ SCENARIO("mapping the relative note velocities of a chord") {
   // PERFORMING TESTS //////////////////////////////////////////////////////////
 
   GIVEN("the SameForAll strategy") {
-    renderer.setChordRenderingStrategy(
+    performer.setChordVelocityMappingStrategy(
       ChordVelocityMapping::StrategyType::SameForAll
     );
 
     WHEN("we play a chord containing random velocities") {
       std::srand(std::time(0));
 
-      feedRenderer(renderer, makeChord({
+      feedPerformer(performer, makeChord({
         static_cast<std::uint8_t>(std::rand() * 126 / RAND_MAX + 1),
         static_cast<std::uint8_t>(std::rand() * 126 / RAND_MAX + 1),
         static_cast<std::uint8_t>(std::rand() * 126 / RAND_MAX + 1)
@@ -71,7 +71,7 @@ SCENARIO("mapping the relative note velocities of a chord") {
         const std::uint8_t cmd_velocity = 120;
 
         auto res = getPerformanceResults(
-          renderer,
+          performer,
           makeChordCommand(cmd_velocity)
         )[0];
 
@@ -88,7 +88,7 @@ SCENARIO("mapping the relative note velocities of a chord") {
   }
 
   GIVEN("the ClippedScaledFromMean strategy") {
-    renderer.setChordRenderingStrategy(
+    performer.setChordVelocityMappingStrategy(
       ChordVelocityMapping::StrategyType::ClippedScaledFromMean
     );
 
@@ -98,13 +98,14 @@ SCENARIO("mapping the relative note velocities of a chord") {
       THEN("the resulting velocities are always between 1 and 127") {
         bool outOfBounds = false;
         auto allRes = getFirstScoreEventsFromVelocities(
-          renderer,
+          performer,
           chord,
           { 1, 64, 127 }
         );
 
         for (const auto& nd : allRes) {
           if (nd.velocity < 1 || nd.velocity > 127) {
+            std::cout << (int) nd.velocity << std::endl;
             outOfBounds = true;
           }
         }
@@ -115,14 +116,14 @@ SCENARIO("mapping the relative note velocities of a chord") {
   }
 
   GIVEN("using the AdjustedScaledFromMean strategy") {
-    renderer.setChordRenderingStrategy(
+    performer.setChordVelocityMappingStrategy(
       ChordVelocityMapping::StrategyType::AdjustedScaledFromMean
     );
     // TODO
   }
   
   GIVEN("using the ClippedScaledFromMax strategy") {
-    renderer.setChordRenderingStrategy(
+    performer.setChordVelocityMappingStrategy(
       ChordVelocityMapping::StrategyType::ClippedScaledFromMax
     );
     WHEN("we play a chord including note velocities 1 to 127") {
@@ -131,7 +132,7 @@ SCENARIO("mapping the relative note velocities of a chord") {
       THEN("the resulting velocities are always between 1 and 127") {
         bool outOfBounds = false;
         auto allRes = getFirstScoreEventsFromVelocities(
-          renderer,
+          performer,
           chord,
           { 1, 64, 127 }
         );
